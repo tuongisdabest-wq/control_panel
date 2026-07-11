@@ -1,0 +1,2674 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>KTuongFX · Control Panel</title>
+<link rel="preconnect" href="https://tmdb-proxy.tuongisdabest.workers.dev" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c14; --panel:#12141f; --panel-2:#171a29; --card:#1b1e30;
+  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.12);
+  --gold:#fcd34d; --gold-dark:#eab308; --gold-dim:rgba(252,211,77,.14);
+  --text:#f2f4f8; --muted:#8991a8; --muted-2:#5c6580;
+  --danger:#f87171; --danger-dim:rgba(248,113,113,.12);
+  --success:#4ade80; --success-dim:rgba(74,222,128,.12);
+  --info:#38bdf8; --info-dim:rgba(56,189,248,.12);
+  --radius:14px; --sidebar-w:264px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(252,211,77,.05), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(56,189,248,.04), transparent 55%),
+    var(--bg);
+  color:var(--text); font-family:'Inter',system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased; min-height:100vh;
+}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+.display{font-family:'Bebas Neue',system-ui,sans-serif; letter-spacing:.03em;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:#2a2e44;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+a{color:inherit;}
+button{font-family:inherit;cursor:pointer;}
+input,textarea,select{font-family:inherit;}
+.hide-scrollbar::-webkit-scrollbar{display:none;}
+.hide-scrollbar{scrollbar-width:none;-ms-overflow-style:none;}
+
+/* ---------- Sprocket rail: chữ ký thị giác "cuộn phim" ---------- */
+.sprocket-rail{
+  position:absolute; left:0; top:0; bottom:0; width:16px;
+  background-image: radial-gradient(circle, rgba(252,211,77,.4) 2.6px, transparent 3px);
+  background-size: 16px 24px; background-position:center 12px; background-repeat:repeat-y;
+  opacity:.55; pointer-events:none;
+}
+.marquee-dots{
+  height:3px; width:100%;
+  background-image: radial-gradient(circle, rgba(252,211,77,.55) 1.4px, transparent 1.6px);
+  background-size: 10px 3px; background-repeat:repeat-x;
+  opacity:.7;
+}
+
+/* ---------- Layout ---------- */
+#app{display:none;}
+.shell{display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:100vh;}
+.sidebar{
+  position:relative; background:linear-gradient(180deg,var(--panel),#0d0f19);
+  border-right:1px solid var(--line); padding:22px 18px 18px 30px;
+  display:flex; flex-direction:column; height:100vh; position:sticky; top:0;
+}
+.sidebar-brand{display:flex; align-items:center; gap:11px; margin-bottom:6px;}
+.brand-mark{
+  width:38px;height:38px;border-radius:10px; flex-shrink:0;
+  background:linear-gradient(145deg,var(--gold),var(--gold-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bebas Neue';font-size:20px;color:#191308; box-shadow:0 6px 18px rgba(252,211,77,.25);
+}
+.brand-name{font-family:'Bebas Neue'; font-size:22px; letter-spacing:.04em; line-height:1;}
+.brand-sub{font-size:10.5px; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; margin-top:2px;}
+.sidebar-nav{margin-top:26px; display:flex; flex-direction:column; gap:3px; flex:1; overflow-y:auto;}
+.nav-section-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted-2); margin:16px 0 8px 10px;}
+.nav-item{
+  display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px;
+  color:var(--muted); font-size:13.5px; font-weight:600; text-decoration:none; border:1px solid transparent;
+  background:transparent; width:100%; text-align:left; transition:.15s;
+}
+.nav-item svg{flex-shrink:0; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,.04); color:var(--text);}
+.nav-item.active{background:var(--gold-dim); color:var(--gold); border-color:rgba(252,211,77,.18);}
+.nav-item .badge{margin-left:auto; font-size:10.5px; background:rgba(255,255,255,.08); color:var(--muted); padding:1px 7px; border-radius:20px;}
+.nav-item.active .badge{background:rgba(252,211,77,.22); color:var(--gold);}
+.sidebar-footer{border-top:1px solid var(--line); padding-top:14px; margin-top:10px;}
+.mini-profile{display:flex; align-items:center; gap:10px; padding:8px; border-radius:12px;}
+.mini-avatar{width:36px;height:36px;border-radius:50%; object-fit:cover; border:1.5px solid var(--line-2); background:#222538;}
+.mini-name{font-size:13px; font-weight:700;}
+.mini-role{font-size:10.5px; color:var(--gold);}
+.logout-btn{
+  margin-top:10px; width:100%; padding:9px; border-radius:10px; border:1px solid var(--line);
+  background:rgba(248,113,113,.06); color:#fca5a5; font-size:12.5px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.logout-btn:hover{background:var(--danger-dim); border-color:rgba(248,113,113,.3);}
+
+.main{min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  position:sticky; top:0; z-index:20; background:rgba(10,12,20,.78); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line); padding:16px 28px; display:flex; align-items:center; justify-content:space-between; gap:14px;
+}
+.topbar h1{font-family:'Bebas Neue'; font-size:26px; letter-spacing:.03em; margin:0; line-height:1;}
+.topbar .crumb{font-size:12px; color:var(--muted); margin-top:3px;}
+.status-pill{display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--muted); background:var(--panel-2); border:1px solid var(--line); padding:6px 12px; border-radius:20px;}
+.status-dot{width:7px;height:7px;border-radius:50%; background:var(--muted-2); box-shadow:0 0 0 3px rgba(255,255,255,.03);}
+.status-dot.on{background:var(--success); box-shadow:0 0 0 3px var(--success-dim);}
+.status-dot.off{background:var(--danger); box-shadow:0 0 0 3px var(--danger-dim);}
+.menu-toggle{display:none; background:var(--panel-2); border:1px solid var(--line); color:var(--text); width:38px;height:38px;border-radius:10px; align-items:center; justify-content:center;}
+
+.content{padding:26px 28px 60px; max-width:1180px; width:100%; margin:0 auto;}
+.view{display:none; animation:fadeIn .25s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+/* ---------- Reusable pieces ---------- */
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px;}
+.panel + .panel{margin-top:18px;}
+.panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap;}
+.panel-title{font-weight:800; font-size:15px; display:flex; align-items:center; gap:8px;}
+.panel-desc{font-size:12.5px; color:var(--muted); margin-top:3px; max-width:640px; line-height:1.5;}
+
+.stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+.stat-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; position:relative; overflow:hidden;}
+.stat-card::after{content:'';position:absolute; right:-20px; top:-20px; width:80px;height:80px;border-radius:50%; background:radial-gradient(circle,var(--gold-dim),transparent 70%);}
+.stat-label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; font-weight:700;}
+.stat-value{font-family:'Bebas Neue'; font-size:38px; margin-top:6px; line-height:1;}
+.stat-hint{font-size:11.5px; color:var(--muted-2); margin-top:6px;}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:10px 16px; border-radius:10px; font-size:13px; font-weight:700; border:1px solid transparent;
+  background:var(--panel-2); color:var(--text); border-color:var(--line); transition:.15s;
+}
+.btn:hover{background:#20233a;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+.btn-gold{background:linear-gradient(145deg,var(--gold),var(--gold-dark)); color:#1a1408; border:none; box-shadow:0 6px 18px rgba(252,211,77,.18);}
+.btn-gold:hover{filter:brightness(1.05);}
+.btn-danger{background:var(--danger-dim); color:#fca5a5; border-color:rgba(248,113,113,.25);}
+.btn-danger:hover{background:rgba(248,113,113,.2);}
+.btn-ghost{background:transparent; border-color:var(--line);}
+.btn-sm{padding:7px 12px; font-size:12px;}
+.btn-icon{width:34px;height:34px; padding:0; border-radius:9px;}
+
+.field-label{font-size:11.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; display:block;}
+.input, textarea.input, select.input{
+  width:100%; background:#0e1019; border:1px solid var(--line); color:var(--text);
+  padding:11px 13px; border-radius:10px; font-size:13.5px; outline:none; transition:.15s;
+}
+.input:focus{border-color:rgba(252,211,77,.45); box-shadow:0 0 0 3px rgba(252,211,77,.08);}
+textarea.input{resize:vertical;}
+.checkline{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--muted); cursor:pointer;}
+.checkline input{accent-color:var(--gold);}
+
+.tag{font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:20px; letter-spacing:.02em;}
+.tag-gold{background:var(--gold-dim); color:var(--gold);}
+.tag-muted{background:rgba(255,255,255,.06); color:var(--muted);}
+.tag-danger{background:var(--danger-dim); color:#fca5a5;}
+.tag-info{background:var(--info-dim); color:var(--info);}
+.tag-success{background:var(--success-dim); color:var(--success);}
+
+.empty-state{text-align:center; padding:38px 16px; color:var(--muted); font-size:13px;}
+.empty-state svg{opacity:.35; margin-bottom:10px;}
+
+.spinner{width:16px;height:16px;border-radius:50%; border:2px solid rgba(255,255,255,.15); border-top-color:var(--gold); animation:spin .7s linear infinite; display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-box{display:flex; align-items:center; justify-content:center; gap:10px; padding:34px; color:var(--muted); font-size:13px;}
+
+/* login */
+.login-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; position:relative; overflow:hidden;}
+.login-wrap::before{content:'';position:absolute; inset:0; background:
+  radial-gradient(700px 400px at 15% 15%, rgba(252,211,77,.07), transparent 60%),
+  radial-gradient(700px 400px at 85% 85%, rgba(56,189,248,.06), transparent 60%);}
+.login-card{position:relative; width:100%; max-width:380px; background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:34px 30px 28px; box-shadow:0 30px 60px rgba(0,0,0,.4);}
+.login-logo{width:52px;height:52px;border-radius:14px; background:linear-gradient(145deg,var(--gold),var(--gold-dark)); display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue'; font-size:26px; color:#191308; margin:0 auto 16px; box-shadow:0 10px 26px rgba(252,211,77,.25);}
+.login-card h2{font-family:'Bebas Neue'; font-size:28px; text-align:center; margin:0 0 2px; letter-spacing:.03em;}
+.login-card p.sub{text-align:center; color:var(--muted); font-size:12.5px; margin:0 0 22px;}
+.err-box{background:var(--danger-dim); border:1px solid rgba(248,113,113,.25); color:#fca5a5; font-size:12px; padding:9px 12px; border-radius:9px; margin-bottom:12px; display:none;}
+
+/* movie grid */
+.movie-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px;}
+.movie-card{position:relative; border-radius:11px; overflow:hidden; cursor:pointer; background:#14172400; border:1px solid var(--line); transition:.15s;}
+.movie-card:hover{border-color:rgba(252,211,77,.35); transform:translateY(-2px);}
+.poster-wrap{position:relative;}
+.movie-poster{width:100%; aspect-ratio:2/3; object-fit:cover; background:#1b1e30; display:block;}
+.movie-name{font-size:11px; padding:7px 8px 8px; font-weight:600; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+/* Số thứ tự (layer) nổi trên poster — dùng cho phim đề xuất */
+.layer-badge{
+  position:absolute; top:4px; left:4px; z-index:3; min-width:23px; height:23px; padding:0 5px;
+  border-radius:7px; background:linear-gradient(145deg,var(--gold),var(--gold-dark)); color:#1a1408;
+  font-family:'Bebas Neue'; font-size:14px; letter-spacing:.02em; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 0 rgba(120,90,10,.65), 0 5px 10px rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.3);
+}
+.movie-reorder{display:flex; gap:5px; padding:0 8px 8px;}
+.reorder-btn{
+  flex:1; height:24px; border-radius:7px; background:rgba(255,255,255,.05); border:1px solid var(--line);
+  color:var(--muted); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
+}
+.reorder-btn:hover{background:rgba(255,255,255,.12); color:var(--text);}
+.reorder-btn:disabled{opacity:.25; cursor:not-allowed;}
+/* Số thứ tự nổi cho dòng phim */
+.row-layer-badge{
+  align-self:center; min-width:24px; height:20px; padding:0 6px; border-radius:6px;
+  background:linear-gradient(145deg,var(--gold),var(--gold-dark)); color:#1a1408; font-family:'Bebas Neue'; font-size:12px;
+  display:flex; align-items:center; justify-content:center; margin-bottom:3px;
+  box-shadow:0 2px 0 rgba(120,90,10,.65), 0 4px 8px rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.3);
+}
+.movie-remove{position:absolute; top:5px; right:5px; width:22px;height:22px; border-radius:50%; background:rgba(0,0,0,.72); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; border:none;}
+.movie-remove:hover{background:var(--danger);}
+.movie-provider{position:absolute; bottom:5px; left:5px; z-index:2; font-size:9px; font-weight:800; padding:2px 6px; border-radius:6px; background:rgba(0,0,0,.72); color:var(--gold);}
+
+/* rows list */
+.row-item{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin-bottom:9px;}
+.row-item-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+.row-order{display:flex; flex-direction:column; gap:2px;}
+.order-btn{width:22px;height:18px; border-radius:5px; background:rgba(255,255,255,.05); border:none; color:var(--muted); font-size:9px; display:flex; align-items:center; justify-content:center;}
+.order-btn:hover{background:rgba(255,255,255,.12); color:var(--text);}
+.order-btn:disabled{opacity:.25;}
+.row-title{font-weight:700; font-size:13.5px;}
+.row-meta{font-size:11px; color:var(--muted); margin-top:2px;}
+.row-actions{display:flex; align-items:center; gap:6px; margin-left:auto; flex-wrap:wrap;}
+.icon-btn{width:32px;height:32px; border-radius:8px; background:rgba(255,255,255,.04); border:1px solid var(--line); color:var(--muted); display:flex; align-items:center; justify-content:center;}
+.icon-btn:hover{background:rgba(255,255,255,.09); color:var(--text);}
+.row-movies-panel{margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+.exclude-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:8px;}
+.exclude-card{position:relative; border-radius:9px; overflow:hidden; cursor:pointer; border:2px solid transparent;}
+.exclude-card.hidden-mv{opacity:.35;}
+.exclude-card.hidden-mv::after{content:'ẨN'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; letter-spacing:.1em; background:rgba(0,0,0,.5); color:#fca5a5;}
+.exclude-card img{width:100%; aspect-ratio:2/3; object-fit:cover; display:block; background:#1b1e30;}
+
+/* posts */
+.composer{display:flex; gap:12px;}
+.post-item{display:flex; gap:12px; padding:14px 0; border-bottom:1px solid var(--line);}
+.post-item:last-child{border-bottom:none;}
+.post-img{max-width:220px; border-radius:10px; margin-top:8px; border:1px solid var(--line);}
+.img-preview-wrap{position:relative; width:100px; margin-top:8px;}
+.img-preview-wrap img{width:100px;height:100px;object-fit:cover;border-radius:10px; border:1px solid var(--line);}
+.img-preview-remove{position:absolute; top:-6px; right:-6px; width:20px;height:20px;border-radius:50%; background:#000; color:#fff; border:none; font-size:10px;}
+
+/* toast */
+#toast-wrap{position:fixed; bottom:22px; right:22px; z-index:200; display:flex; flex-direction:column; gap:10px; align-items:flex-end;}
+.toast{background:var(--panel-2); border:1px solid var(--line-2); color:var(--text); padding:12px 16px; border-radius:11px; font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.4); max-width:320px; display:flex; align-items:center; gap:9px; animation:toastIn .25s ease;}
+.toast.error{border-color:rgba(248,113,113,.4);}
+.toast.error .dot{background:var(--danger);}
+.toast .dot{width:8px;height:8px;border-radius:50%; background:var(--success); flex-shrink:0;}
+@keyframes toastIn{from{opacity:0; transform:translateX(14px);} to{opacity:1; transform:translateX(0);}}
+
+/* roadmap cards */
+.power-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px; height:100%;}
+.power-card h4{margin:0; font-size:13.5px; display:flex; align-items:center; gap:8px;}
+.power-card p{margin:0; font-size:12px; color:var(--muted); line-height:1.55;}
+.power-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+
+/* modal */
+.modal-overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); z-index:100; display:none; align-items:center; justify-content:center; padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--panel); border:1px solid var(--line-2); border-radius:16px; padding:22px; max-width:420px; width:100%; box-shadow:0 30px 60px rgba(0,0,0,.5);}
+.modal-box h3{margin:0 0 8px; font-size:16px;}
+.modal-box p{margin:0 0 18px; font-size:13px; color:var(--muted); line-height:1.5;}
+.modal-actions{display:flex; gap:10px; justify-content:flex-end;}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr;}
+  .sidebar{position:fixed; z-index:60; left:0; top:0; bottom:0; width:270px; transform:translateX(-100%); transition:.25s; box-shadow:20px 0 50px rgba(0,0,0,.4);}
+  .sidebar.open{transform:translateX(0);}
+  .menu-toggle{display:flex;}
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .power-grid{grid-template-columns:1fr;}
+  .content{padding:20px 16px 50px;}
+  .topbar{padding:14px 16px;}
+}
+/* insights / data analytics */
+.insight-country-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; cursor:pointer; transition:.15s;}
+.insight-country-card:hover{border-color:rgba(252,211,77,.35); transform:translateY(-2px);}
+.insight-country-card.active{border-color:var(--gold); background:var(--gold-dim);}
+.insight-country-card .ic-name{font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:space-between; gap:6px;}
+.insight-country-card .ic-count{font-size:10.5px; background:rgba(255,255,255,.08); color:var(--muted); padding:1px 7px; border-radius:20px;}
+.insight-country-card.active .ic-count{background:rgba(252,211,77,.22); color:var(--gold);}
+.insight-country-card .ic-score{font-family:'Bebas Neue'; font-size:24px; margin-top:6px; color:var(--gold);}
+.insight-country-card .ic-hint{font-size:10.5px; color:var(--muted-2); margin-top:2px;}
+
+.rank-row{display:flex; align-items:center; gap:12px; padding:10px 4px; border-bottom:1px solid var(--line);}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{font-family:'Bebas Neue'; font-size:20px; color:var(--muted-2); width:28px; text-align:center; flex-shrink:0;}
+.rank-poster{width:42px; height:63px; border-radius:6px; object-fit:cover; flex-shrink:0; background:#1b1e30;}
+.rank-info{flex:1; min-width:0;}
+.rank-name{font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.rank-meta{font-size:11px; color:var(--muted); margin-top:2px;}
+.rank-score{font-family:'Bebas Neue'; font-size:22px; color:var(--gold); flex-shrink:0; text-align:right; min-width:52px;}
+.rank-trend{font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; flex-shrink:0;}
+.rank-trend.up{background:var(--success-dim); color:var(--success);}
+.rank-trend.down{background:var(--danger-dim); color:#f87171;}
+.rank-trend.flat{background:rgba(255,255,255,.06); color:var(--muted);}
+.tag.tag-ticker-up{background:var(--success-dim); color:var(--success);}
+.tag.tag-ticker-down{background:var(--danger-dim); color:#f87171;}
+
+@media (max-width:900px){
+  #view-insights [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:1fr 1fr !important;}
+}
+
+.sidebar-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:55; display:none;}
+.sidebar-backdrop.open{display:block;}
+
+/* ---------- Toggle switch (freeze web) ---------- */
+.switch{position:relative; display:inline-block; width:46px; height:26px; flex-shrink:0;}
+.switch input{opacity:0; width:0; height:0; position:absolute;}
+.switch-slider{position:absolute; cursor:pointer; inset:0; background:rgba(255,255,255,.12); transition:.2s; border-radius:26px;}
+.switch-slider::before{content:''; position:absolute; height:20px; width:20px; left:3px; bottom:3px; background:#fff; transition:.2s; border-radius:50%;}
+.switch input:checked + .switch-slider{background:linear-gradient(145deg,var(--gold),var(--gold-dark));}
+.switch input:checked + .switch-slider::before{transform:translateX(20px); background:#1a1408;}
+
+/* ---------- Diễn viên yêu thích ---------- */
+.actor-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:12px;}
+.actor-card{background:var(--card); border:1px solid var(--line); border-radius:11px; overflow:hidden; cursor:pointer; transition:.15s; text-align:center;}
+.actor-card:hover{border-color:rgba(252,211,77,.35); transform:translateY(-2px);}
+.actor-photo{width:100%; aspect-ratio:2/3; object-fit:cover; background:#1b1e30; display:block;}
+.actor-card-name{font-size:11.5px; font-weight:700; padding:7px 6px 8px; line-height:1.3;}
+.actor-row{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:9px; flex-wrap:wrap;}
+.actor-row img{width:46px;height:46px;border-radius:50%; object-fit:cover; flex-shrink:0; background:#1b1e30;}
+.actor-row-name{font-weight:700; font-size:13.5px;}
+.actor-row-bio{font-size:11.5px; color:var(--muted); margin-top:2px; max-width:460px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.actor-row-meta{font-size:10.5px; color:var(--muted-2); margin-top:3px;}
+
+/* ---------- Freeze web banner ---------- */
+#freeze-banner{display:none; background:rgba(248,113,113,.12); border-bottom:1px solid rgba(248,113,113,.3); padding:10px 28px; font-size:12.5px; color:#fca5a5; align-items:center; justify-content:space-between; gap:10px;}
+</style>
+</head>
+<body>
+
+<!-- ============== LOGIN ============== -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">K</div>
+    <h2>Control Panel</h2>
+    <p class="sub">Đăng nhập quản trị · KTuongFX</p>
+    <div id="login-err" class="err-box"></div>
+    <label class="field-label">Mật khẩu quản trị</label>
+    <input id="login-pass" type="password" class="input" placeholder="••••••••" autocomplete="current-password" style="margin-bottom:14px;">
+    <button id="login-btn" class="btn btn-gold" style="width:100%; padding:12px;" onclick="Handlers.login()">Đăng nhập</button>
+    <p style="text-align:center; font-size:11px; color:var(--muted-2); margin-top:16px;">Control panel độc lập · kết nối trực tiếp tới Worker API của web chính</p>
+  </div>
+</div>
+
+<!-- ============== APP SHELL ============== -->
+<div id="app">
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="Handlers.closeSidebar()"></div>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sprocket-rail"></div>
+      <div class="sidebar-brand">
+        <div class="brand-mark">K</div>
+        <div>
+          <div class="brand-name">KTuongFX</div>
+          <div class="brand-sub">Control Panel</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav hide-scrollbar">
+        <div class="nav-section-label">Tổng quan</div>
+        <button class="nav-item" data-view="dashboard" onclick="Handlers.navigate('dashboard')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>
+          Bảng điều khiển
+        </button>
+
+        <div class="nav-section-label">Nội dung phim</div>
+        <button class="nav-item" data-view="recommended" onclick="Handlers.navigate('recommended')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.9 6.26L21.8 9l-5 4.87L18.2 21 12 17.27 5.8 21l1.4-7.13-5-4.87 6.9-.74L12 2z"></path></svg>
+          Phim đề xuất <span class="badge" id="nav-badge-recommended">0</span>
+        </button>
+        <button class="nav-item" data-view="rows" onclick="Handlers.navigate('rows')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="14" y2="18"></line></svg>
+          Dòng phim &amp; thể loại <span class="badge" id="nav-badge-rows">0</span>
+        </button>
+        <button class="nav-item" data-view="playlists" onclick="Handlers.navigate('playlists')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+          Playlist tuỳ chỉnh <span class="badge" id="nav-badge-playlists">0</span>
+        </button>
+        <button class="nav-item" data-view="actors" onclick="Handlers.navigate('actors')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"></path><circle cx="18" cy="8.5" r="2.5"></circle><path d="M15.5 14.2c2.6.3 4.5 2.3 4.5 5.3"></path></svg>
+          Diễn viên yêu thích <span class="badge" id="nav-badge-actors">0</span>
+        </button>
+
+        <div class="nav-section-label">Phân tích</div>
+        <button class="nav-item" data-view="insights" onclick="Handlers.navigate('insights')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="M18.5 8.5l-5 5-3-3-4 4"></path></svg>
+          Phim Hot &amp; Điểm TMDB
+        </button>
+
+        <div class="nav-section-label">Truyền thông</div>
+        <button class="nav-item" data-view="posts" onclick="Handlers.navigate('posts')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Bài viết &amp; ảnh <span class="badge" id="nav-badge-posts">0</span>
+        </button>
+        <button class="nav-item" data-view="profile" onclick="Handlers.navigate('profile')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+          Hồ sơ hiển thị
+        </button>
+
+        <div class="nav-section-label">Hệ thống</div>
+        <button class="nav-item" data-view="site" onclick="Handlers.navigate('site')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          Cấu hình Intro/Site
+        </button>
+        <button class="nav-item" data-view="backup" onclick="Handlers.navigate('backup')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Sao lưu &amp; khôi phục
+        </button>
+        <button class="nav-item" data-view="power" onclick="Handlers.navigate('power')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6z"></path></svg>
+          Quyền quản trị mở rộng
+        </button>
+        <button class="nav-item" data-view="freeze" onclick="Handlers.navigate('freeze')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"></path><circle cx="12" cy="12" r="9.5"></circle></svg>
+          Freeze Web
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="mini-profile">
+          <img id="mini-avatar" class="mini-avatar" src="" onerror="this.style.visibility='hidden'">
+          <div>
+            <div class="mini-name" id="mini-name">KTuongFX</div>
+            <div class="mini-role">Quản trị viên</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="Handlers.logout()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="menu-toggle" onclick="Handlers.toggleSidebar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="15" y2="18"></line></svg>
+          </button>
+          <div>
+            <h1 id="page-title">Bảng điều khiển</h1>
+            <div class="crumb" id="page-crumb">Tổng quan hoạt động hệ thống</div>
+          </div>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Đang kiểm tra kết nối…</span>
+        </div>
+      </div>
+
+      <div id="freeze-banner">
+        <span>🔴 Web đang tạm dừng (freeze) cho người xem.</span>
+        <button class="btn btn-sm btn-ghost" onclick="Handlers.navigate('freeze')" style="color:#fca5a5; border-color:rgba(248,113,113,.35);">Quản lý</button>
+      </div>
+
+      <div class="content">
+
+        <!-- DASHBOARD -->
+        <div class="view" id="view-dashboard">
+          <div class="stat-grid" id="stat-grid">
+            <div class="loading-box"><span class="spinner"></span> Đang tải số liệu…</div>
+          </div>
+
+          <div class="panel" style="margin-top:18px;">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Thao tác nhanh</div>
+                <div class="panel-desc">Các việc admin làm thường xuyên nhất.</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-gold" onclick="Handlers.navigate('recommended')">+ Thêm phim đề xuất</button>
+              <button class="btn" onclick="Handlers.navigate('rows')">Quản lý dòng phim</button>
+              <button class="btn" onclick="Handlers.navigate('playlists')">+ Tạo playlist tuỳ chỉnh</button>
+              <button class="btn" onclick="Handlers.navigate('actors')">+ Thêm diễn viên yêu thích</button>
+              <button class="btn" onclick="Handlers.navigate('posts')">Đăng bài viết mới</button>
+              <button class="btn" onclick="Handlers.navigate('backup')">Sao lưu dữ liệu</button>
+              <button class="btn btn-danger" onclick="Handlers.navigate('freeze')">🧊 Freeze Web</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Bài viết gần đây</div>
+                <div class="panel-desc">3 bài mới nhất trên bảng tin trang chủ.</div>
+              </div>
+              <button class="btn btn-sm btn-ghost" onclick="Handlers.navigate('posts')">Xem tất cả</button>
+            </div>
+            <div id="dashboard-recent-posts"><div class="loading-box"><span class="spinner"></span> Đang tải…</div></div>
+          </div>
+        </div>
+
+        <!-- RECOMMENDED -->
+        <div class="view" id="view-recommended">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🔍 Tìm phim để thêm vào đề xuất</div>
+                <div class="panel-desc">Gõ tên phim (tiếng Việt/Anh đều được), bấm vào phim để thêm vào danh sách đề xuất hiển thị ở trang chủ.</div>
+              </div>
+            </div>
+            <input id="rec-search" class="input" placeholder="VD: Squid Game, Sherlock Holmes..." oninput="Handlers.searchMovies(this.value)">
+            <div id="rec-search-results" class="movie-grid" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Danh sách đề xuất hiện tại (<span id="rec-count">0</span>/50)</div>
+                <div class="panel-desc">Đây là các phim đang được đề xuất nổi bật cho người xem. Nhớ bấm "Lưu danh sách" sau khi chỉnh sửa.</div>
+              </div>
+              <button class="btn btn-gold" onclick="Handlers.saveRecommended()">💾 Lưu danh sách</button>
+            </div>
+            <div id="rec-list" class="movie-grid"><div class="loading-box"><span class="spinner"></span> Đang tải…</div></div>
+          </div>
+        </div>
+
+        <!-- INSIGHTS: Phim Hot & Điểm TMDB -->
+        <div class="view" id="view-insights">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🧠 Bộ lọc phân tích thông minh</div>
+                <div class="panel-desc">Quét dữ liệu phim theo Thể loại / Quốc gia / Năm, xếp hạng theo điểm TMDB thật (vote_average &amp; vote_count) lấy trực tiếp từ nguồn phim — không cần gõ tên phim.</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px;">
+              <div>
+                <label class="field-label">Thể loại</label>
+                <select id="insight-genre" class="input"><option value="">Tất cả thể loại</option></select>
+              </div>
+              <div>
+                <label class="field-label">Quốc gia</label>
+                <select id="insight-country" class="input"><option value="">Tất cả quốc gia</option></select>
+              </div>
+              <div>
+                <label class="field-label">Năm</label>
+                <select id="insight-year" class="input"><option value="">Tất cả năm</option></select>
+              </div>
+              <div>
+                <label class="field-label">Nguồn quét</label>
+                <select id="insight-source" class="input">
+                  <option value="phim-moi-cap-nhat">Phim mới cập nhật</option>
+                  <option value="phim-bo">Phim bộ</option>
+                  <option value="phim-le">Phim lẻ</option>
+                  <option value="all">Quét rộng (tất cả nguồn)</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-gold" id="insight-run-btn" onclick="Insights.run()">🔍 Phân tích ngay</button>
+            <span id="insight-scanned-hint" class="row-meta" style="margin-left:10px;"></span>
+          </div>
+
+          <div class="stat-grid" id="insight-stat-grid">
+            <div class="loading-box"><span class="spinner"></span> Chưa có dữ liệu — bấm "Phân tích ngay" ở trên.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">📈 Biểu đồ xu hướng điểm TMDB <span class="tag tag-gold" id="insight-ticker">--</span></div>
+                <div class="panel-desc">Mỗi lần bạn bấm "Phân tích ngay", hệ thống ghi lại 1 điểm dữ liệu (điểm TMDB trung bình của Top phim hot hiện tại) vào biểu đồ này — theo thời gian sẽ tạo thành đường xu hướng kiểu biểu đồ chứng khoán, lưu ngay trên trình duyệt của bạn.</div>
+              </div>
+              <button class="btn btn-sm btn-ghost" onclick="Insights.clearHistory()">↺ Xoá lịch sử biểu đồ</button>
+            </div>
+            <canvas id="insight-chart" style="width:100%; height:220px; display:block;"></canvas>
+            <div id="insight-chart-empty" class="empty-state" style="display:none;">Chưa đủ dữ liệu — phân tích thêm vài lần (tốt nhất là các ngày khác nhau) để thấy đường xu hướng.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🌍 Phim hot phân loại theo quốc gia</div>
+                <div class="panel-desc">Bấm vào 1 quốc gia để lọc nhanh bảng xếp hạng bên dưới theo đúng quốc gia đó.</div>
+              </div>
+            </div>
+            <div id="insight-country-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;">
+              <div class="empty-state">Chưa có dữ liệu.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🏆 Bảng xếp hạng phim hot (<span id="insight-rank-count">0</span>)</div>
+                <div class="panel-desc">Sắp xếp theo điểm TMDB — mũi tên xu hướng ▲/▼ so sánh hạng thịnh hành ngày với tuần trên TMDB.</div>
+              </div>
+            </div>
+            <div id="insight-rank-list"><div class="empty-state">Chưa có dữ liệu.</div></div>
+          </div>
+        </div>
+
+        <!-- ROWS -->
+        <div class="view" id="view-rows">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">➕ Thêm dòng phim mới</div>
+                <div class="panel-desc">Tạo một hàng phim trên trang chủ theo Thể loại, Quốc gia hoặc Danh sách có sẵn — chỉ cần gõ tên tiếng Việt, hệ thống tự dò đúng mã.</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:10px;">
+              <div>
+                <label class="field-label">Tên dòng phim hiển thị</label>
+                <input id="row-title" class="input" placeholder="VD: Phim Kiếm Hiệp Đặc Sắc">
+              </div>
+              <div>
+                <label class="field-label">Loại nguồn</label>
+                <select id="row-type" class="input" onchange="Handlers.rowTypeChanged()">
+                  <option value="the-loai">Thể loại</option>
+                  <option value="quoc-gia">Quốc gia</option>
+                  <option value="danh-sach">Danh sách</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:10px;">
+              <div>
+                <label class="field-label">Tên thể loại / quốc gia / danh sách</label>
+                <input id="row-name" class="input" list="row-name-list" placeholder="Gõ tên, VD: Hàn Quốc, Hành Động...">
+                <datalist id="row-name-list"></datalist>
+              </div>
+              <div>
+                <label class="field-label">Số phim hiển thị</label>
+                <input id="row-limit" type="number" class="input" value="12" min="4" max="24">
+              </div>
+            </div>
+            <div style="display:flex; gap:18px; align-items:center; margin-bottom:14px;">
+              <label class="checkline"><input type="checkbox" id="row-rank"> Đánh số thứ hạng (Top 10 kiểu Netflix)</label>
+              <label class="checkline"><input type="checkbox" id="row-popularity"> Ưu tiên phim phổ biến</label>
+            </div>
+            <button class="btn btn-gold" onclick="Handlers.addRow()">+ Thêm dòng phim</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Các dòng phim hiện tại (<span id="rows-count">0</span>)</div>
+                <div class="panel-desc">Đổi tên, ẩn/hiện cả dòng, ẩn từng phim riêng lẻ trong dòng, sắp xếp thứ tự, hoặc xoá hẳn.</div>
+              </div>
+              <input id="row-filter" class="input" style="max-width:220px;" placeholder="Tìm theo tên dòng phim..." oninput="Handlers.filterRows(this.value)">
+            </div>
+            <div id="rows-list"><div class="loading-box"><span class="spinner"></span> Đang tải…</div></div>
+            <div style="display:flex; justify-content:space-between; margin-top:16px; flex-wrap:wrap; gap:10px;">
+              <button class="btn btn-ghost" onclick="Handlers.resetRows()">↺ Khôi phục mặc định</button>
+              <button class="btn btn-gold" onclick="Handlers.saveRows()">💾 Lưu tất cả thay đổi</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PLAYLISTS -->
+        <div class="view" id="view-playlists">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🎞️ Tạo playlist tuỳ chỉnh mới</div>
+                <div class="panel-desc">Giống mục "Phim đề xuất" nhưng bạn có thể tạo nhiều playlist khác nhau (VD: Phim Hàn Quốc Thịnh Hành, Phim Nhật...). Mỗi phim trong playlist có số thứ tự nổi trên poster (layer) giống ảnh mẫu, và bạn tự chọn playlist hiển thị ở đâu trên trang chủ.</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:10px; margin-bottom:10px;">
+              <div>
+                <label class="field-label">Tên playlist hiển thị</label>
+                <input id="pl-title" class="input" placeholder="VD: Phim Hàn Quốc Thịnh Hành">
+              </div>
+              <div>
+                <label class="field-label">Vị trí hiển thị trên trang chủ</label>
+                <select id="pl-position" class="input" onchange="Handlers.plPositionChanged()">
+                  <option value="top">Đầu trang (ngay dưới banner)</option>
+                  <option value="after_recommended">Sau phần Phim đề xuất</option>
+                  <option value="middle_rows">Xen giữa các dòng phim</option>
+                  <option value="bottom">Cuối trang</option>
+                </select>
+              </div>
+            </div>
+            <div id="pl-after-row-wrap" style="display:none; margin-bottom:14px; max-width:260px;">
+              <label class="field-label">Hiện sau dòng phim thứ mấy?</label>
+              <input id="pl-after-row" type="number" class="input" value="1" min="1">
+            </div>
+            <button class="btn btn-gold" onclick="Handlers.addPlaylist()">+ Tạo playlist</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Các playlist hiện tại (<span id="pl-count">0</span>)</div>
+                <div class="panel-desc">Bấm "Quản lý phim" để tìm & thêm phim vào từng playlist. Dùng nút Trước/Sau để sắp xếp — số nổi trên poster sẽ tự cập nhật theo đúng thứ tự.</div>
+              </div>
+              <button class="btn btn-gold" onclick="Handlers.savePlaylists()">💾 Lưu tất cả playlist</button>
+            </div>
+            <div id="pl-list"><div class="loading-box"><span class="spinner"></span> Đang tải…</div></div>
+          </div>
+        </div>
+
+        <!-- ACTORS -->
+        <div class="view" id="view-actors">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🌟 Tìm diễn viên (tên &amp; ảnh lấy từ TMDB)</div>
+                <div class="panel-desc">Gõ tên diễn viên bạn yêu thích — tên và ảnh sẽ lấy tự động từ TMDB, phần tiểu sử bên dưới do chính bạn viết.</div>
+              </div>
+            </div>
+            <input id="actor-search" class="input" placeholder="VD: Song Joong Ki, Tom Cruise..." oninput="Handlers.searchActors(this.value)">
+            <div id="actor-search-results" class="actor-grid" style="margin-top:14px;"></div>
+          </div>
+
+          <div class="panel" id="actor-pending-panel" style="display:none;">
+            <div class="panel-head">
+              <div class="panel-title">Thêm vào danh sách yêu thích</div>
+            </div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <img id="actor-pending-photo" src="" style="width:90px;height:90px;border-radius:12px;object-fit:cover;background:#1b1e30; flex-shrink:0;">
+              <div style="flex:1; min-width:220px;">
+                <div id="actor-pending-name" style="font-weight:800; font-size:15px; margin-bottom:8px;"></div>
+                <label class="field-label">Tiểu sử (do admin viết)</label>
+                <textarea id="actor-pending-bio" class="input" rows="3" placeholder="Viết vài dòng giới thiệu về diễn viên này..." style="margin-bottom:10px;"></textarea>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+                  <div>
+                    <label class="field-label">Vị trí hiển thị</label>
+                    <select id="actor-pending-position" class="input" onchange="Handlers.actorPositionChanged()">
+                      <option value="top">Đầu trang (ngay dưới banner)</option>
+                      <option value="after_recommended">Sau phần Phim đề xuất</option>
+                      <option value="middle_rows">Xen giữa các dòng phim</option>
+                      <option value="bottom">Cuối trang</option>
+                    </select>
+                  </div>
+                  <div id="actor-after-row-wrap" style="display:none;">
+                    <label class="field-label">Sau dòng phim thứ mấy?</label>
+                    <input id="actor-after-row" type="number" class="input" value="1" min="1">
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                  <button class="btn btn-gold" onclick="Handlers.confirmAddActor()">+ Thêm diễn viên</button>
+                  <button class="btn btn-ghost" onclick="Handlers.cancelPendingActor()">Huỷ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Diễn viên yêu thích đã thêm (<span id="actor-count">0</span>)</div>
+                <div class="panel-desc">Sắp xếp thứ tự hiển thị, sửa tiểu sử/vị trí hoặc xoá.</div>
+              </div>
+              <button class="btn btn-gold" onclick="Handlers.saveActors()">💾 Lưu danh sách</button>
+            </div>
+            <div id="actor-list"><div class="loading-box"><span class="spinner"></span> Đang tải…</div></div>
+          </div>
+        </div>
+
+        <!-- POSTS -->
+        <div class="view" id="view-posts">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">📝 Đăng bài viết mới</div>
+                <div class="panel-desc">Bài viết hiển thị công khai ở mục "Bảng Tin" trên trang chủ, có thể kèm ảnh.</div>
+              </div>
+            </div>
+            <div class="composer">
+              <img id="composer-avatar" class="mini-avatar" style="width:42px;height:42px;" src="" onerror="this.style.visibility='hidden'">
+              <div style="flex:1;">
+                <textarea id="post-content" class="input" rows="3" placeholder="Bạn muốn thông báo gì tới người xem?"></textarea>
+                <div id="post-img-preview-wrap" class="img-preview-wrap" style="display:none;">
+                  <img id="post-img-preview">
+                  <button class="img-preview-remove" onclick="Handlers.removePostImage()">✕</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                  <button class="icon-btn" title="Đính kèm ảnh" onclick="document.getElementById('post-img-input').click()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+                  </button>
+                  <input type="file" id="post-img-input" accept="image/*" class="hidden" style="display:none;" onchange="Handlers.pickPostImage(this.files[0])">
+                  <button id="post-submit-btn" class="btn btn-gold" onclick="Handlers.createPost()">Đăng bài</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Bài viết đã đăng (<span id="posts-count">0</span>)</div>
+              </div>
+            </div>
+            <div id="posts-list"><div class="loading-box"><span class="spinner"></span> Đang tải…</div></div>
+          </div>
+        </div>
+
+        <!-- PROFILE -->
+        <div class="view" id="view-profile">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">👤 Hồ sơ hiển thị của Admin</div>
+                <div class="panel-desc">Tên và ảnh đại diện này sẽ hiện ra ở mọi bài viết đăng trên bảng tin.</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+              <div style="position:relative;">
+                <img id="profile-avatar-preview" src="" style="width:84px;height:84px;border-radius:50%; object-fit:cover; border:2px solid var(--line-2); background:#222538;" onerror="this.style.visibility='hidden'">
+                <button class="btn-icon" style="position:absolute; bottom:-2px; right:-2px; background:var(--gold); color:#1a1408; border:2px solid var(--panel);" onclick="document.getElementById('profile-avatar-input').click()">✎</button>
+                <input type="file" id="profile-avatar-input" accept="image/*" style="display:none;" onchange="Handlers.pickAvatar(this.files[0])">
+              </div>
+              <div style="flex:1; min-width:220px;">
+                <label class="field-label">Tên hiển thị</label>
+                <input id="profile-name" class="input" maxlength="50" placeholder="VD: KTuongFX" style="margin-bottom:10px;">
+                <p id="avatar-status" style="font-size:11.5px; color:var(--muted); display:none; margin:0 0 10px;"></p>
+                <button class="btn btn-gold" onclick="Handlers.saveProfile()">💾 Lưu hồ sơ</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🔑 Đổi mật khẩu quản trị</div>
+                <div class="panel-desc">Cần nhập đúng mật khẩu hiện tại. Mật khẩu mới tối thiểu 6 ký tự. Sau khi đổi, các phiên đăng nhập cũ khác vẫn còn hiệu lực tới khi hết hạn (12 giờ).</div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:520px;">
+              <div style="grid-column:1/-1;">
+                <label class="field-label">Mật khẩu hiện tại</label>
+                <input id="pwd-old" type="password" class="input" autocomplete="current-password">
+              </div>
+              <div>
+                <label class="field-label">Mật khẩu mới</label>
+                <input id="pwd-new" type="password" class="input" autocomplete="new-password">
+              </div>
+              <div>
+                <label class="field-label">Nhập lại mật khẩu mới</label>
+                <input id="pwd-new2" type="password" class="input" autocomplete="new-password">
+              </div>
+            </div>
+            <p id="pwd-status" style="font-size:11.5px; color:var(--muted); display:none; margin:10px 0 0;"></p>
+            <button class="btn btn-gold" style="margin-top:12px;" onclick="Handlers.changePassword()">Đổi mật khẩu</button>
+          </div>
+        </div>
+
+        <!-- BACKUP -->
+        <div class="view" id="view-backup">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">⬇️ Xuất dữ liệu sao lưu</div>
+                <div class="panel-desc">Tải toàn bộ dữ liệu quản trị hiện tại (phim đề xuất, dòng phim, bài viết, hồ sơ) về một file JSON — dùng để lưu trữ hoặc phục hồi sau này.</div>
+              </div>
+            </div>
+            <button class="btn btn-gold" onclick="Handlers.exportBackup()">Xuất file sao lưu (.json)</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">⬆️ Khôi phục từ file sao lưu</div>
+                <div class="panel-desc">Chọn 1 file JSON đã xuất trước đó. Hệ thống sẽ ghi đè dữ liệu hiện tại — hãy chắc chắn trước khi xác nhận.</div>
+              </div>
+            </div>
+            <input type="file" id="restore-file-input" accept="application/json" class="input" onchange="Handlers.previewRestore(this.files[0])">
+            <div id="restore-preview" style="margin-top:14px;"></div>
+          </div>
+        </div>
+
+        <!-- SITE CONFIG (Intro video/logo, tên site) -->
+        <div class="view" id="view-site">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🎬 Cấu hình Intro &amp; thông tin site</div>
+                <div class="panel-desc">
+                  Mô hình "lớp nền + override": bản gốc mặc định (intro.mp4, logo.png, tên site "KTuongFX")
+                  vẫn nằm an toàn trong code index.html. Ở đây bạn chỉ lưu phần muốn ĐÈ LÊN — để trống ô nào
+                  thì trang chủ tự dùng lại giá trị mặc định gốc của ô đó. Bấm "Khôi phục mặc định" bất cứ lúc
+                  nào để xoá sạch mọi tuỳ chỉnh, quay về đúng bản gốc.
+                </div>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+              <div style="grid-column:1/-1;">
+                <label class="field-label">Link video Intro (mp4) — để trống = dùng intro.mp4 mặc định</label>
+                <input id="site-intro-video" class="input" placeholder="https://.../intro.mp4">
+              </div>
+              <div>
+                <label class="field-label">Link logo hiện trong Intro — để trống = dùng logo.png mặc định</label>
+                <input id="site-intro-logo" class="input" placeholder="https://.../logo.png">
+              </div>
+              <div>
+                <label class="field-label">Tên site — để trống = dùng "KTuongFX" mặc định</label>
+                <input id="site-name" class="input" maxlength="60" placeholder="KTuongFX">
+              </div>
+              <div style="grid-column:1/-1; display:flex; align-items:center; gap:10px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; cursor:pointer;">
+                  <input type="checkbox" id="site-intro-every-visit" class="accent-primary">
+                  Luôn hiện Intro mỗi lần mở web (bỏ tick = chỉ hiện 1 lần/phiên truy cập)
+                </label>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+              <button class="btn btn-gold" onclick="Handlers.saveSiteConfig()">💾 Lưu cấu hình</button>
+              <button class="btn btn-danger" onclick="Handlers.resetSiteConfig()">↺ Khôi phục mặc định</button>
+            </div>
+            <p id="site-config-status" style="font-size:11.5px; color:var(--muted); margin:10px 0 0;"></p>
+          </div>
+        </div>
+
+        <!-- FREEZE -->
+        <div class="view" id="view-freeze">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">🧊 Tạm dừng web (Freeze)</div>
+                <div class="panel-desc">Khi bật, người xem sẽ chỉ thấy ảnh + dòng chữ bạn chọn thay vì toàn bộ trang web — dùng lúc cần sửa lỗi mà không muốn người xem thấy web bị lỗi. Các phần khác (phim, dòng phim, bài viết...) vẫn giữ nguyên, không bị mất dữ liệu.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="freeze-toggle" onchange="Handlers.toggleFreezePreview()">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div id="freeze-status-tag" style="margin-bottom:14px;"></div>
+
+            <label class="field-label">Ảnh hiển thị khi freeze (không bắt buộc)</label>
+            <div style="display:flex; gap:14px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+              <img id="freeze-img-preview" src="" style="width:120px;height:70px;object-fit:cover;border-radius:10px;background:#1b1e30;border:1px solid var(--line);" onerror="this.style.visibility='hidden'">
+              <div>
+                <button class="btn btn-sm" onclick="document.getElementById('freeze-img-input').click()">Chọn ảnh</button>
+                <input type="file" id="freeze-img-input" accept="image/*" style="display:none;" onchange="Handlers.pickFreezeImage(this.files[0])">
+                <p style="font-size:11px; color:var(--muted); margin:6px 0 0;">Không chọn ảnh cũng được, chỉ cần dòng chữ bên dưới.</p>
+              </div>
+            </div>
+
+            <label class="field-label">Nội dung hiển thị</label>
+            <textarea id="freeze-text" class="input" rows="3" placeholder="VD: Web đang bảo trì, quay lại sau ít phút nhé!" style="margin-bottom:16px;" oninput="Handlers.renderFreezePreview()"></textarea>
+
+            <button class="btn btn-gold" onclick="Handlers.saveFreeze()">💾 Lưu &amp; áp dụng</button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">👁️ Xem trước</div>
+            <div class="panel-desc" style="margin-bottom:12px;">Đây là giao diện người xem sẽ thấy khi web đang freeze.</div>
+            <div id="freeze-preview-box" style="border-radius:14px; overflow:hidden; border:1px solid var(--line); min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; background:#0e1019;">
+              <img id="freeze-preview-img" src="" style="max-width:220px; border-radius:10px; margin-bottom:16px; display:none;" onerror="this.style.display='none'">
+              <p id="freeze-preview-text" style="font-size:15px; color:var(--text); max-width:420px; line-height:1.6; margin:0;">Chưa có nội dung.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- POWER / ROADMAP -->
+        <div class="view" id="view-power">
+          <div class="panel">
+            <div class="panel-title">🛡️ Quyền quản trị hiện có (đang hoạt động thật)</div>
+            <div class="panel-desc" style="margin-bottom:14px;">Các quyền dưới đây dùng đúng API của Worker hiện tại — bấm là chạy thật, không phải bản demo.</div>
+            <div class="power-grid" id="power-active"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">🧭 Quyền tối cao đề xuất thêm (cần bổ sung API ở worker.js)</div>
+            <div class="panel-desc" style="margin-bottom:14px;">Đây là các quyền một control panel "toàn quyền" nên có. Control panel này đã chừa sẵn giao diện/luồng thao tác — chỉ cần bổ sung endpoint tương ứng trong worker.js để kích hoạt.</div>
+            <div class="power-grid" id="power-roadmap"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <h3 id="modal-title">Xác nhận</h3>
+    <p id="modal-desc"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="Modal.close()">Huỷ</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — trỏ về đúng Worker backend của web KTuongFX gốc
+   ============================================================ */
+const CONFIG = {
+  WORKER_BASE: 'https://tmdb-proxy.tuongisdabest.workers.dev',
+  API_BASE: 'https://ophim1.com',
+  API_KK: 'https://phimapi.com',
+  API_BASE_PROXY: 'https://tmdb-proxy.tuongisdabest.workers.dev/ophim',
+  API_KK_PROXY: 'https://tmdb-proxy.tuongisdabest.workers.dev/kkphim',
+  IMG_BASE: 'https://tmdb-proxy.tuongisdabest.workers.dev/ophimimg/uploads/movies/',
+  IMG_KK_PROXY: 'https://tmdb-proxy.tuongisdabest.workers.dev/kkphimimg/',
+  TMDB_BASE: 'https://tmdb-proxy.tuongisdabest.workers.dev/tmdb',
+  FETCH_TIMEOUT_MS: 9000,
+};
+
+const DANH_SACH_OPTIONS = [
+  { name: 'Phim Mới Cập Nhật', slug: 'phim-moi-cap-nhat' },
+  { name: 'Phim Bộ', slug: 'phim-bo' },
+  { name: 'Phim Lẻ', slug: 'phim-le' },
+  { name: 'TV Shows', slug: 'tv-shows' },
+  { name: 'Hoạt Hình', slug: 'hoat-hinh' },
+  { name: 'Phim Vietsub', slug: 'phim-vietsub' },
+  { name: 'Phim Thuyết Minh', slug: 'phim-thuyet-minh' },
+  { name: 'Phim Lồng Tiếng', slug: 'phim-long-tieng' }
+];
+
+// THÊM MỚI: danh sách năm cho bộ lọc phân tích (tab "Phim Hot & Điểm TMDB")
+const INSIGHT_YEARS = (() => {
+  const nowY = new Date().getFullYear();
+  const years = [];
+  for (let y = nowY; y >= nowY - 14; y--) years.push(y);
+  return years;
+})();
+
+const State = {
+  token: localStorage.getItem('ktuong_admin_token') || null,
+  currentView: 'dashboard',
+  genres: [], countries: [],
+  searchTimeout: null,
+  searchResults: [],
+  recommended: [],
+  homepageRows: [],
+  rowMoviesCache: {},
+  rowsFilter: '',
+  posts: [],
+  profile: { name: 'KTuongFX', avatar: '' },
+  pendingPostImage: null,
+  // THÊM MỚI: state cho tab "Phim Hot & Điểm TMDB"
+  insightPool: [],
+  insightCountryFilter: '',
+  insightInited: false,
+
+  // THÊM MỚI: playlist tuỳ chỉnh (nhiều danh sách như "Phim đề xuất")
+  playlists: [],
+  plSearchTimeout: null,
+  plSearchResults: {},
+  plExpanded: {},
+
+  // THÊM MỚI: diễn viên yêu thích (dữ liệu ảnh/tên từ TMDB)
+  actors: [],
+  actorSearchTimeout: null,
+  actorSearchResults: [],
+  pendingActor: null,
+
+  // THÊM MỚI: freeze web (chế độ bảo trì tạm thời)
+  maintenance: { enabled: false, image: '', text: '' },
+
+  // THÊM MỚI: cấu hình Intro/Site (lớp override, object rỗng {} nghĩa là đang dùng mặc định gốc)
+  siteConfig: {},
+};
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+const Utils = {
+  escapeHtml: (s) => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+
+  toast(msg, type='success'){
+    const wrap = document.getElementById('toast-wrap');
+    const el = document.createElement('div');
+    el.className = `toast ${type === 'error' ? 'error' : ''}`;
+    el.innerHTML = `<span class="dot"></span><span>${Utils.escapeHtml(msg)}</span>`;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateX(14px)'; el.style.transition='.25s'; setTimeout(()=>el.remove(),250); }, 3400);
+  },
+
+  relTime(iso){
+    if(!iso) return '';
+    const diff = (Date.now() - new Date(iso).getTime())/1000;
+    if(diff < 60) return 'Vừa xong';
+    if(diff < 3600) return `${Math.floor(diff/60)} phút trước`;
+    if(diff < 86400) return `${Math.floor(diff/3600)} giờ trước`;
+    if(diff < 604800) return `${Math.floor(diff/86400)} ngày trước`;
+    return new Date(iso).toLocaleDateString('vi-VN');
+  },
+
+  getImage(path, provider='OP'){
+    if(!path) return 'https://placehold.co/300x450/1c1f2e/94a3b8?text=No+Poster';
+    if(path.startsWith('http')){
+      const op = path.match(/^https?:\/\/img\.ophim\.live\/(.+)$/i);
+      if(op) return `https://tmdb-proxy.tuongisdabest.workers.dev/ophimimg/${op[1]}`;
+      const kk = path.match(/^https?:\/\/phimimg\.com\/(.+)$/i);
+      if(kk) return `${CONFIG.IMG_KK_PROXY}${kk[1]}`;
+      return path;
+    }
+    if(provider === 'OP' || (!path.includes('upload/') && !path.includes('phimimg'))){
+      return `${CONFIG.IMG_BASE}${path.replace(/^\/+/, '')}`;
+    }
+    return `${CONFIG.IMG_KK_PROXY}${path.replace(/^\/+/, '')}`;
+  },
+
+  movieImg(m){ return Utils.getImage(m.thumb_url || m.poster_url, m.sourceProvider || 'OP'); },
+
+  _normKey: (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '').trim(),
+
+  downloadJSON(obj, filename){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  },
+
+  // ĐÃ SỬA (fix "xoá rồi vẫn hiện lại"): gắn tham số _t=timestamp vào mọi GET tới dữ liệu do admin quản
+  // lý + ép fetch bỏ qua cache trình duyệt, để panel luôn thấy đúng dữ liệu mới nhất ngay sau khi lưu/xoá,
+  // không phải đợi cache hết hạn. Dùng cho mọi GET tới các endpoint /recommended, /homepage-rows,
+  // /custom-rows, /actors, /posts, /admin/profile, /maintenance, /site-config.
+  noStoreFetch(url, options = {}){
+    const sep = url.includes('?') ? '&' : '?';
+    const bustUrl = `${url}${sep}_t=${Date.now()}`;
+    return fetch(bustUrl, { ...options, cache: 'no-store' });
+  }
+};
+
+async function fetchWithTimeout(url, ms = CONFIG.FETCH_TIMEOUT_MS){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), ms);
+  try{
+    const res = await fetch(url, {signal:controller.signal});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    if(!data) throw new Error('empty');
+    return data;
+  } finally { clearTimeout(timer); }
+}
+async function fetchRace(urls, ms){
+  const list = urls.filter(Boolean);
+  if(!list.length) return null;
+  try{ return await Promise.any(list.map(u=>fetchWithTimeout(u, ms))); } catch(e){ return null; }
+}
+async function fetchProxyThenDirect(proxyBase, directBase, endpoint){
+  return fetchRace([proxyBase?`${proxyBase}${endpoint}`:null, directBase?`${directBase}${endpoint}`:null]);
+}
+
+/* ============================================================
+   MOVIE API (nguồn phim công khai OPhim/KKPhim, qua proxy Worker)
+   ============================================================ */
+const MovieAPI = {
+  fetchJSON: (endpoint) => fetchProxyThenDirect(CONFIG.API_BASE_PROXY, CONFIG.API_BASE, endpoint).catch(()=>null),
+
+  async getAppData(){
+    try{
+      const cached = JSON.parse(localStorage.getItem('ktuong_cp_appdata') || 'null');
+      if(cached && Array.isArray(cached.genres) && Array.isArray(cached.countries) && (Date.now()-cached.ts) < 24*3600*1000){
+        State.genres = cached.genres; State.countries = cached.countries; return;
+      }
+    }catch(e){}
+    const [g,c] = await Promise.all([MovieAPI.fetchJSON('/the-loai'), MovieAPI.fetchJSON('/quoc-gia')]);
+    if(g) State.genres = g; if(c) State.countries = c;
+    try{ localStorage.setItem('ktuong_cp_appdata', JSON.stringify({ts:Date.now(), genres:State.genres, countries:State.countries})); }catch(e){}
+  },
+
+  async search(kw, limit=30){
+    let results = []; const seen = new Set();
+    const add = (movie, provider) => {
+      if(!movie || !movie.slug) return;
+      const key = `${provider}_${movie.slug.trim().toLowerCase()}`;
+      if(seen.has(key)) return; seen.add(key);
+      movie.sourceProvider = provider;
+      results.push(movie);
+    };
+    const [op, kk] = await Promise.allSettled([
+      MovieAPI.fetchJSON(`/v1/api/tim-kiem?keyword=${encodeURIComponent(kw)}&limit=${limit}`),
+      fetchProxyThenDirect(CONFIG.API_KK_PROXY, CONFIG.API_KK, `/v1/api/tim-kiem?keyword=${encodeURIComponent(kw)}&limit=${limit}`)
+    ]);
+    if(op.status==='fulfilled' && op.value?.data?.items) op.value.data.items.forEach(m=>add(m,'OP'));
+    if(kk.status==='fulfilled' && kk.value?.data?.items) kk.value.data.items.forEach(m=>add(m,'KK'));
+    return results;
+  },
+
+  getList(type, slug, limit=24){
+    const ep = ['phim-bo','phim-le','tv-shows','hoat-hinh','phim-moi-cap-nhat'].includes(slug)
+      ? `/v1/api/danh-sach/${slug}?limit=${limit}` : `/v1/api/${type}/${slug}?limit=${limit}`;
+    return MovieAPI.fetchJSON(ep);
+  }
+};
+
+/* ============================================================
+   TMDB API (qua Worker proxy) — chỉ dùng để lấy xu hướng ngày/tuần
+   thật từ TMDB cho mũi tên ▲▼ ở bảng xếp hạng phim hot.
+   ============================================================ */
+const TMDBAPI = {
+  getTrending: (mediaType='all', window='day') => fetchWithTimeout(`${CONFIG.TMDB_BASE}/trending/${mediaType}/${window}`).catch(()=>null),
+  // THÊM MỚI: tìm diễn viên theo tên (dùng cho mục "Diễn viên yêu thích")
+  searchPerson: (query) => fetchWithTimeout(`${CONFIG.TMDB_BASE}/search/person?query=${encodeURIComponent(query)}`).catch(()=>null),
+};
+
+/* ============================================================
+   ADMIN API (Worker) — đăng nhập, phim đề xuất, dòng phim, bài viết, hồ sơ, ảnh
+   ============================================================ */
+const AdminAPI = {
+  async authedFetch(path, options={}){
+    const headers = { ...(options.headers||{}), 'Authorization': `Bearer ${State.token}` };
+    // ĐÃ SỬA: cache:'no-store' cho cả request có xác thực, tránh trình duyệt tự cache response cũ.
+    const res = await fetch(`${CONFIG.WORKER_BASE}${path}`, {...options, headers, cache: 'no-store'});
+    if(res.status === 401){
+      Handlers.logout();
+      Utils.toast('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.', 'error');
+      throw new Error('unauthorized');
+    }
+    return res;
+  },
+  login: (password) => fetch(`${CONFIG.WORKER_BASE}/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password}), cache:'no-store'
+  }),
+  changePassword: (oldPassword, newPassword) => AdminAPI.authedFetch('/admin/change-password', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({oldPassword, newPassword})}),
+  getRecommended: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/recommended`).then(r=>r.json()),
+  saveRecommended: (items) => AdminAPI.authedFetch('/recommended', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})}),
+  getRows: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/homepage-rows`).then(r=>r.json()),
+  saveRows: (rows) => AdminAPI.authedFetch('/homepage-rows', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rows})}),
+  getPosts: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/posts`).then(r=>r.json()),
+  savePosts: (items) => AdminAPI.authedFetch('/posts', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})}),
+  getProfile: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/admin/profile`).then(r=>r.json()),
+  saveProfile: (name, avatar) => AdminAPI.authedFetch('/admin/profile', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, avatar})}),
+  uploadImage: (dataBase64, filename, folder) => AdminAPI.authedFetch('/admin/upload-image', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({dataBase64, filename, folder})}),
+  // ĐÃ SỬA (dọn /playlists): KHÔNG còn gọi /playlists (route này không hề tồn tại ở worker.js -> 404 âm
+  // thầm, tính năng "Playlist tuỳ chỉnh" trước đây không lưu được gì). Giờ dùng CHUNG endpoint /custom-rows
+  // (đã hoạt động thật, cùng được index.html đọc để hiển thị trang chủ). Chuẩn hoá lại tên field ở đây
+  // (rows <-> playlists) để phần Handlers/State bên dưới không phải sửa gì thêm.
+  getPlaylists: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/custom-rows`).then(r=>r.json()).then(d => ({ playlists: d.rows || [] })),
+  savePlaylists: (playlists) => AdminAPI.authedFetch('/custom-rows', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rows: playlists})}),
+  // Diễn viên yêu thích — endpoint /actors đã có sẵn ở worker.js
+  getActors: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/actors`).then(r=>r.json()),
+  saveActors: (items) => AdminAPI.authedFetch('/actors', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})}),
+  // Freeze web (chế độ bảo trì) — endpoint /maintenance đã có sẵn ở worker.js;
+  // trang chính (index.html) đọc GET /maintenance lúc tải trang để hiện màn hình freeze khi enabled=true
+  getMaintenance: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/maintenance`).then(r=>r.json()),
+  saveMaintenance: (data) => AdminAPI.authedFetch('/maintenance', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)}),
+  // THÊM MỚI: cấu hình chung của site (Intro video/logo, tên site) — theo mô hình lớp nền + override.
+  getSiteConfig: () => Utils.noStoreFetch(`${CONFIG.WORKER_BASE}/site-config`).then(r=>r.json()),
+  saveSiteConfig: (cfg) => AdminAPI.authedFetch('/site-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)}),
+};
+
+const fileToRawBase64 = (file) => new Promise((resolve, reject)=>{
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+  reader.onerror = reject;
+  reader.readAsDataURL(file);
+});
+
+/* ============================================================
+   MODAL helper (xác nhận xoá / khôi phục / v.v.)
+   ============================================================ */
+const Modal = {
+  open(title, desc, onConfirm, confirmLabel='Xác nhận'){
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-desc').textContent = desc;
+    const btn = document.getElementById('modal-confirm-btn');
+    btn.textContent = confirmLabel;
+    btn.onclick = () => { onConfirm(); Modal.close(); };
+    document.getElementById('modal-overlay').classList.add('open');
+  },
+  close(){ document.getElementById('modal-overlay').classList.remove('open'); }
+};
+
+/* ============================================================
+   RENDER helpers cho các mảnh giao diện
+   ============================================================ */
+function renderMovieCardSearch(m, i){
+  return `<div class="movie-card" onclick="Handlers.addRecommended(${i})" title="Bấm để thêm vào đề xuất">
+    <div class="poster-wrap">
+      <span class="movie-provider">${m.sourceProvider}</span>
+      <img class="movie-poster" src="${Utils.movieImg(m)}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1c1f2e/94a3b8?text=No+Poster'">
+    </div>
+    <div class="movie-name">${Utils.escapeHtml(m.name)}</div>
+  </div>`;
+}
+function renderMovieCardRecommended(m, i, total){
+  return `<div class="movie-card" data-rec-index="${i}">
+    <div class="poster-wrap">
+      <span class="layer-badge" title="Vị trí hiện tại trong danh sách">${i+1}</span>
+      <span class="movie-provider">${m.sourceProvider||'OP'}</span>
+      <button class="movie-remove" onclick="event.stopPropagation(); Handlers.removeRecommended(${i})">✕</button>
+      <img class="movie-poster" src="${Utils.movieImg(m)}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1c1f2e/94a3b8?text=No+Poster'">
+    </div>
+    <div class="movie-name">${Utils.escapeHtml(m.name)}</div>
+    <div class="movie-reorder">
+      <button class="reorder-btn" title="Đưa phim này lên trước (hiện sớm hơn)" ${i===0?'disabled':''} onclick="event.stopPropagation(); Handlers.moveRecommended(${i},-1)">◀ Trước</button>
+      <button class="reorder-btn" title="Đưa phim này xuống sau (hiện muộn hơn)" ${i===total-1?'disabled':''} onclick="event.stopPropagation(); Handlers.moveRecommended(${i},1)">Sau ▶</button>
+    </div>
+  </div>`;
+}
+
+function rowTypeLabel(type){ return type==='the-loai'?'Thể loại':type==='quoc-gia'?'Quốc gia':'Danh sách'; }
+
+function renderRowItem(row, index, total){
+  const excluded = row.excludedSlugs?.length || 0;
+  return `<div class="row-item" data-row-index="${index}">
+    <div class="row-item-top">
+      <div class="row-order">
+        <span class="row-layer-badge" title="Vị trí hiện tại (layer)">${index+1}</span>
+        <button class="order-btn" ${index===0?'disabled':''} onclick="Handlers.moveRow(${index},-1)">▲</button>
+        <button class="order-btn" ${index===total-1?'disabled':''} onclick="Handlers.moveRow(${index},1)">▼</button>
+      </div>
+      <div style="flex:1; min-width:160px;">
+        <div class="row-title">${Utils.escapeHtml(row.title)} ${row.isDefault?'<span class="tag tag-muted">mặc định</span>':''}</div>
+        <p class="row-meta">${rowTypeLabel(row.type)} · slug: <span class="mono">${row.slug}</span> · ${row.limit} phim${row.rank?' · có thứ hạng':''}${row.popularity?' · ưu tiên phổ biến':''}${excluded?` · đang ẩn ${excluded} phim`:''}</p>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" title="Sửa tên" onclick="Handlers.renameRow(${index})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>
+        </button>
+        <button class="icon-btn btn-sm" title="Quản lý ẩn/hiện từng phim" onclick="Handlers.toggleRowMovies(${index})" style="width:auto; padding:0 10px; font-size:11.5px; font-weight:700;">Quản lý phim</button>
+        <button class="icon-btn" title="${row.hidden?'Đang ẩn - bấm để hiện':'Đang hiện - bấm để ẩn'}" onclick="Handlers.toggleRowHidden(${index})" style="${row.hidden?'':'color:var(--gold); border-color:rgba(252,211,77,.3);'}">
+          ${row.hidden
+            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
+            : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'}
+        </button>
+        <button class="icon-btn" title="Xoá dòng phim" onclick="Handlers.removeRow(${index})" style="color:#fca5a5;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+        </button>
+      </div>
+    </div>
+    <div id="row-movies-panel-${index}"></div>
+  </div>`;
+}
+
+function renderRowMoviesPanel(row, index, movies, loading){
+  if(loading) return `<div class="row-movies-panel"><div class="loading-box" style="padding:14px;"><span class="spinner"></span> Đang tải danh sách phim…</div></div>`;
+  if(!movies.length) return `<div class="row-movies-panel"><p style="font-size:12px; color:var(--muted);">Không tải được danh sách phim cho dòng này.</p></div>`;
+  return `<div class="row-movies-panel">
+    <p style="font-size:11.5px; color:var(--muted); margin:0 0 10px;">Bấm vào phim để ẩn/hiện riêng phim đó trong dòng "${Utils.escapeHtml(row.title)}".</p>
+    <div class="exclude-grid">
+      ${movies.map(m=>{
+        const isHidden = (row.excludedSlugs||[]).includes(m.slug);
+        return `<div class="exclude-card ${isHidden?'hidden-mv':''}" onclick="Handlers.toggleExcludeMovie(${index}, '${m.slug}')" title="${isHidden?'Đang ẩn - bấm để hiện lại':'Đang hiện - bấm để ẩn'}">
+          <img src="${Utils.movieImg(m)}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1c1f2e/94a3b8?text=No+Poster'">
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderPostItem(p){
+  const avatar = Utils.escapeHtml(State.profile?.avatar || '');
+  const name = Utils.escapeHtml(State.profile?.name || 'KTuongFX');
+  return `<div class="post-item">
+    <img src="${avatar}" class="mini-avatar" onerror="this.style.visibility='hidden'">
+    <div style="flex:1;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <p style="margin:0; font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px;">${name}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--gold)"><path d="M12 2l2.9 6.26L21.8 9l-5 4.87L18.2 21 12 17.27 5.8 21l1.4-7.13-5-4.87 6.9-.74L12 2z"></path></svg>
+        </p>
+        <button class="icon-btn" style="width:28px;height:28px;" title="Xoá bài viết" onclick="Handlers.deletePost('${p.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+        </button>
+      </div>
+      <p style="font-size:11px; color:var(--muted); margin:1px 0 6px;">${Utils.relTime(p.created_at)}</p>
+      <p style="font-size:13px; line-height:1.55; margin:0; white-space:pre-wrap;">${Utils.escapeHtml(p.content)}</p>
+      ${p.images?.[0] ? `<img class="post-img" src="${Utils.escapeHtml(p.images[0])}">` : ''}
+    </div>
+  </div>`;
+}
+
+/* THÊM MỚI: nhãn vị trí hiển thị dùng chung cho playlist & diễn viên */
+function positionLabel(pos, afterRowIndex){
+  const map = { top:'Đầu trang (dưới banner)', after_recommended:'Sau phần đề xuất', middle_rows:`Xen giữa dòng phim (sau dòng #${afterRowIndex||1})`, bottom:'Cuối trang' };
+  return map[pos] || map.top;
+}
+
+/* THÊM MỚI: thẻ phim trong playlist tuỳ chỉnh — có số layer nổi + nút sắp xếp */
+function renderPlaylistMovieCard(pIndex, m, i, total){
+  return `<div class="movie-card" data-pl-movie-index="${i}">
+    <div class="poster-wrap">
+      <span class="layer-badge" title="Vị trí hiện tại trong playlist">${i+1}</span>
+      <span class="movie-provider">${m.sourceProvider||'OP'}</span>
+      <button class="movie-remove" onclick="event.stopPropagation(); Handlers.removePlaylistMovie(${pIndex},${i})">✕</button>
+      <img class="movie-poster" src="${Utils.movieImg(m)}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1c1f2e/94a3b8?text=No+Poster'">
+    </div>
+    <div class="movie-name">${Utils.escapeHtml(m.name)}</div>
+    <div class="movie-reorder">
+      <button class="reorder-btn" title="Đưa phim này lên trước" ${i===0?'disabled':''} onclick="event.stopPropagation(); Handlers.movePlaylistMovie(${pIndex},${i},-1)">◀ Trước</button>
+      <button class="reorder-btn" title="Đưa phim này xuống sau" ${i===total-1?'disabled':''} onclick="event.stopPropagation(); Handlers.movePlaylistMovie(${pIndex},${i},1)">Sau ▶</button>
+    </div>
+  </div>`;
+}
+function renderPlaylistSearchCard(pIndex, m, i){
+  return `<div class="movie-card" onclick="Handlers.addPlaylistMovie(${pIndex},${i})" title="Bấm để thêm vào playlist">
+    <div class="poster-wrap">
+      <span class="movie-provider">${m.sourceProvider}</span>
+      <img class="movie-poster" src="${Utils.movieImg(m)}" loading="lazy" onerror="this.src='https://placehold.co/300x450/1c1f2e/94a3b8?text=No+Poster'">
+    </div>
+    <div class="movie-name">${Utils.escapeHtml(m.name)}</div>
+  </div>`;
+}
+function renderPlaylistItem(pl, index, total){
+  const expanded = !!State.plExpanded[index];
+  const items = pl.items || [];
+  return `<div class="row-item" data-pl-index="${index}">
+    <div class="row-item-top">
+      <div class="row-order">
+        <span class="row-layer-badge" title="Vị trí layer (thứ tự nội bộ)">${index+1}</span>
+        <button class="order-btn" ${index===0?'disabled':''} onclick="Handlers.movePlaylist(${index},-1)">▲</button>
+        <button class="order-btn" ${index===total-1?'disabled':''} onclick="Handlers.movePlaylist(${index},1)">▼</button>
+      </div>
+      <div style="flex:1; min-width:160px;">
+        <div class="row-title">${Utils.escapeHtml(pl.title)}</div>
+        <p class="row-meta">${items.length} phim · <span class="tag tag-info">${positionLabel(pl.position, pl.afterRowIndex)}</span>${pl.hidden?' · <span class="tag tag-danger">Đang ẩn</span>':''}</p>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" title="Sửa tên &amp; vị trí" onclick="Handlers.renamePlaylist(${index})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>
+        </button>
+        <button class="icon-btn btn-sm" style="width:auto; padding:0 10px; font-size:11.5px; font-weight:700;" onclick="Handlers.togglePlaylistExpand(${index})">${expanded?'Đóng':'Quản lý phim'}</button>
+        <button class="icon-btn" title="${pl.hidden?'Đang ẩn - bấm để hiện':'Đang hiện - bấm để ẩn'}" onclick="Handlers.togglePlaylistHidden(${index})" style="${pl.hidden?'':'color:var(--gold); border-color:rgba(252,211,77,.3);'}">
+          ${pl.hidden
+            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.8 21.8 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>'
+            : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'}
+        </button>
+        <button class="icon-btn" title="Xoá playlist" onclick="Handlers.removePlaylist(${index})" style="color:#fca5a5;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+        </button>
+      </div>
+    </div>
+    ${expanded ? `
+    <div class="row-movies-panel">
+      <input class="input" placeholder="Tìm phim để thêm vào playlist này..." oninput="Handlers.searchPlaylistMovies(${index}, this.value)" style="margin-bottom:10px;">
+      <div id="pl-search-results-${index}" class="movie-grid" style="margin-bottom:14px;"></div>
+      <p style="font-size:11.5px; color:var(--muted); margin:0 0 8px;">Phim trong playlist (số nổi trên poster = thứ tự hiển thị):</p>
+      <div class="movie-grid">${items.length ? items.map((m,i)=>renderPlaylistMovieCard(index,m,i,items.length)).join('') : '<div class="empty-state" style="grid-column:1/-1;">Chưa có phim nào trong playlist này.</div>'}</div>
+    </div>` : ''}
+  </div>`;
+}
+
+/* THÊM MỚI: thẻ diễn viên trong ô tìm kiếm TMDB */
+function renderActorSearchCard(a, i){
+  const photo = a.profile_path ? `https://image.tmdb.org/t/p/w300${a.profile_path}` : 'https://placehold.co/200x300/1c1f2e/94a3b8?text=No+Photo';
+  return `<div class="actor-card" onclick="Handlers.pickActorFromSearch(${i})" title="Bấm để thêm vào danh sách yêu thích">
+    <img class="actor-photo" src="${photo}" loading="lazy" onerror="this.src='https://placehold.co/200x300/1c1f2e/94a3b8?text=No+Photo'">
+    <div class="actor-card-name">${Utils.escapeHtml(a.name)}</div>
+  </div>`;
+}
+/* THÊM MỚI: dòng diễn viên đã thêm vào danh sách yêu thích */
+function renderActorRow(a, index, total){
+  return `<div class="actor-row" data-actor-index="${index}">
+    <img src="${Utils.escapeHtml(a.photo||'')}" onerror="this.src='https://placehold.co/100x100/1c1f2e/94a3b8?text=%3F'">
+    <div style="flex:1; min-width:160px;">
+      <div class="actor-row-name">${Utils.escapeHtml(a.name)}</div>
+      <div class="actor-row-bio">${Utils.escapeHtml(a.bio||'Chưa có tiểu sử.')}</div>
+      <div class="actor-row-meta">${positionLabel(a.position, a.afterRowIndex)}</div>
+    </div>
+    <div class="row-order">
+      <button class="order-btn" ${index===0?'disabled':''} onclick="Handlers.moveActor(${index},-1)">▲</button>
+      <button class="order-btn" ${index===total-1?'disabled':''} onclick="Handlers.moveActor(${index},1)">▼</button>
+    </div>
+    <div class="row-actions" style="margin-left:0;">
+      <button class="icon-btn" title="Sửa tiểu sử &amp; vị trí" onclick="Handlers.editActor(${index})">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>
+      </button>
+      <button class="icon-btn" title="Xoá" onclick="Handlers.removeActor(${index})" style="color:#fca5a5;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+      </button>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   HANDLERS
+   ============================================================ */
+const Handlers = {
+  /* ---------- Auth ---------- */
+  async login(){
+    const input = document.getElementById('login-pass');
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('login-err');
+    const password = (input.value||'').trim();
+    err.style.display = 'none';
+    if(!password) return;
+    btn.disabled = true; btn.textContent = 'Đang đăng nhập…';
+    try{
+      const res = await AdminAPI.login(password);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.token){
+        State.token = data.token;
+        localStorage.setItem('ktuong_admin_token', data.token);
+        Handlers.boot();
+      } else {
+        err.textContent = 'Sai mật khẩu, vui lòng thử lại.';
+        err.style.display = 'block';
+      }
+    }catch(e){
+      err.textContent = 'Không kết nối được máy chủ, thử lại sau.';
+      err.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Đăng nhập';
+    }
+  },
+  logout(){
+    State.token = null;
+    localStorage.removeItem('ktuong_admin_token');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-view').style.display = 'flex';
+  },
+
+  /* ---------- Nav ---------- */
+  navigate(view){
+    State.currentView = view;
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(`view-${view}`).classList.add('active');
+    const titles = {
+      dashboard: ['Bảng điều khiển', 'Tổng quan hoạt động hệ thống'],
+      recommended: ['Phim đề xuất', 'Chọn phim nổi bật hiển thị cho người xem'],
+      rows: ['Dòng phim & thể loại', 'Tuỳ biến các hàng phim trên trang chủ'],
+      playlists: ['Playlist tuỳ chỉnh', 'Tạo nhiều playlist phim như "Phim đề xuất", tự chọn vị trí hiển thị'],
+      actors: ['Diễn viên yêu thích', 'Thêm diễn viên kèm tiểu sử, ảnh/tên lấy từ TMDB'],
+      insights: ['Phim Hot & Điểm TMDB', 'Phân tích thông minh theo thể loại, quốc gia, năm'],
+      posts: ['Bài viết & ảnh', 'Đăng thông báo, tin tức kèm ảnh lên bảng tin'],
+      profile: ['Hồ sơ hiển thị', 'Tên và ảnh đại diện của admin'],
+      site: ['Cấu hình Intro/Site', 'Đổi Intro video/logo, tên site — luôn khôi phục được mặc định gốc'],
+      backup: ['Sao lưu & khôi phục', 'Xuất / nhập toàn bộ dữ liệu quản trị'],
+      freeze: ['Freeze Web', 'Bật/tắt chế độ tạm dừng web toàn site'],
+      power: ['Quyền quản trị mở rộng', 'Quyền hiện có và lộ trình nâng cấp'],
+    };
+    document.getElementById('page-title').textContent = titles[view][0];
+    document.getElementById('page-crumb').textContent = titles[view][1];
+    Handlers.closeSidebar();
+
+    if(view==='dashboard') Handlers.loadDashboard();
+    if(view==='recommended') Handlers.loadRecommended();
+    if(view==='rows') Handlers.loadRows();
+    if(view==='playlists') Handlers.loadPlaylists();
+    if(view==='actors') Handlers.loadActors();
+    if(view==='insights') Insights.init();
+    if(view==='posts') Handlers.loadPosts();
+    if(view==='profile') Handlers.loadProfileView();
+    if(view==='site') Handlers.loadSiteConfig();
+    if(view==='freeze') Handlers.loadFreeze();
+    if(view==='power') Handlers.renderPower();
+  },
+  toggleSidebar(){
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-backdrop').classList.toggle('open');
+  },
+  closeSidebar(){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
+  },
+
+  /* ---------- Dashboard ---------- */
+  async loadDashboard(){
+    try{
+      const [rec, rowsData, postsData, playlistsData, actorsData, maintenanceData] = await Promise.all([
+        AdminAPI.getRecommended().catch(()=>({items:[]})),
+        AdminAPI.getRows().catch(()=>({rows:[]})),
+        AdminAPI.getPosts().catch(()=>({items:[]})),
+        AdminAPI.getPlaylists().catch(()=>({playlists:[]})),
+        AdminAPI.getActors().catch(()=>({items:[]})),
+        AdminAPI.getMaintenance().catch(()=>({enabled:false})),
+      ]);
+      const recCount = (rec.items||[]).length;
+      const rows = rowsData.rows || [];
+      const rowsVisible = rows.filter(r=>!r.hidden).length;
+      const posts = postsData.items || [];
+      const playlists = playlistsData.playlists || [];
+      const actors = actorsData.items || [];
+      State.maintenance.enabled = !!maintenanceData.enabled;
+      document.getElementById('nav-badge-recommended').textContent = recCount;
+      document.getElementById('nav-badge-rows').textContent = rows.length;
+      document.getElementById('nav-badge-posts').textContent = posts.length;
+      document.getElementById('nav-badge-playlists').textContent = playlists.length;
+      document.getElementById('nav-badge-actors').textContent = actors.length;
+      Handlers.syncFreezeBanner();
+
+      document.getElementById('stat-grid').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Phim đề xuất</div><div class="stat-value">${recCount}<span style="font-size:16px;color:var(--muted);">/50</span></div><div class="stat-hint">đang nổi bật ở trang chủ</div></div>
+        <div class="stat-card"><div class="stat-label">Dòng phim</div><div class="stat-value">${rows.length}</div><div class="stat-hint">${rowsVisible} đang hiển thị · ${rows.length-rowsVisible} đang ẩn</div></div>
+        <div class="stat-card"><div class="stat-label">Playlist tuỳ chỉnh</div><div class="stat-value">${playlists.length}</div><div class="stat-hint">giống "Phim đề xuất" nhưng nhiều danh sách</div></div>
+        <div class="stat-card"><div class="stat-label">Diễn viên yêu thích</div><div class="stat-value">${actors.length}</div><div class="stat-hint">tên/ảnh từ TMDB, tiểu sử tự viết</div></div>
+        <div class="stat-card"><div class="stat-label">Bài viết</div><div class="stat-value">${posts.length}</div><div class="stat-hint">trên bảng tin công khai</div></div>
+        <div class="stat-card"><div class="stat-label">Trạng thái web</div><div class="stat-value" style="font-size:18px;">${State.maintenance.enabled ? '🔴 Đang freeze' : '🟢 Bình thường'}</div><div class="stat-hint">${State.maintenance.enabled ? 'Người xem đang thấy màn hình tạm dừng' : 'Web hoạt động đầy đủ'}</div></div>
+        <div class="stat-card"><div class="stat-label">Hồ sơ hiển thị</div><div class="stat-value" style="font-size:22px; font-family:'Inter'; font-weight:800;">${Utils.escapeHtml(State.profile.name||'—')}</div><div class="stat-hint">tên hiện ra trên mọi bài viết</div></div>
+      `;
+      document.getElementById('dashboard-recent-posts').innerHTML = posts.length
+        ? posts.slice(0,3).map(renderPostItem).join('')
+        : `<div class="empty-state">Chưa có bài viết nào.</div>`;
+    }catch(e){
+      document.getElementById('stat-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Không tải được số liệu, thử lại sau.</div>`;
+    }
+  },
+
+  /* ---------- Phim đề xuất ---------- */
+  async loadRecommended(){
+    try{
+      const data = await AdminAPI.getRecommended();
+      State.recommended = data.items || [];
+    }catch(e){ State.recommended = []; }
+    Handlers.renderRecommendedList();
+  },
+  renderRecommendedList(){
+    document.getElementById('rec-count').textContent = State.recommended.length;
+    document.getElementById('nav-badge-recommended').textContent = State.recommended.length;
+    const el = document.getElementById('rec-list');
+    const total = State.recommended.length;
+    el.innerHTML = total
+      ? State.recommended.map((m,i)=>renderMovieCardRecommended(m,i,total)).join('')
+      : `<div class="empty-state" style="grid-column:1/-1;">Chưa có phim đề xuất nào. Tìm và bấm vào phim ở trên để thêm.</div>`;
+  },
+  searchMovies(val){
+    const kw = val.trim();
+    if(State.searchTimeout) clearTimeout(State.searchTimeout);
+    const el = document.getElementById('rec-search-results');
+    if(!kw){ el.innerHTML=''; return; }
+    el.innerHTML = `<div class="loading-box" style="grid-column:1/-1;"><span class="spinner"></span> Đang tìm…</div>`;
+    State.searchTimeout = setTimeout(async ()=>{
+      State.searchResults = await MovieAPI.search(kw, 24);
+      el.innerHTML = State.searchResults.length
+        ? State.searchResults.map(renderMovieCardSearch).join('')
+        : `<div class="empty-state" style="grid-column:1/-1;">Không tìm thấy phim phù hợp.</div>`;
+    }, 400);
+  },
+  addRecommended(i){
+    const movie = State.searchResults[i];
+    if(!movie) return;
+    if(State.recommended.some(m=>m.slug===movie.slug && m.sourceProvider===movie.sourceProvider)){ Utils.toast('Phim này đã có trong danh sách đề xuất.','error'); return; }
+    if(State.recommended.length>=50){ Utils.toast('Danh sách đề xuất đã đầy (tối đa 50 phim).','error'); return; }
+    State.recommended.push(movie);
+    Handlers.renderRecommendedList();
+    Utils.toast(`Đã thêm "${movie.name}" — nhớ bấm "Lưu danh sách".`);
+  },
+  removeRecommended(i){ State.recommended.splice(i,1); Handlers.renderRecommendedList(); },
+  moveRecommended(index, dir){
+    const target = index+dir;
+    if(target<0 || target>=State.recommended.length) return;
+    const arr = State.recommended;
+    [arr[index],arr[target]] = [arr[target],arr[index]];
+    Handlers.renderRecommendedList();
+    Utils.toast('Đã đổi vị trí — nhớ bấm "Lưu danh sách" để lưu thứ tự mới.');
+  },
+  async saveRecommended(){
+    try{
+      const res = await AdminAPI.saveRecommended(State.recommended);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success) Utils.toast('Đã lưu danh sách phim đề xuất!');
+      else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Dòng phim ---------- */
+  async loadRows(){
+    if(!State.genres.length || !State.countries.length){ try{ await MovieAPI.getAppData(); }catch(e){} }
+    Handlers.rowTypeChanged();
+    try{
+      const data = await AdminAPI.getRows();
+      State.homepageRows = data.rows || [];
+    }catch(e){ State.homepageRows = []; }
+    Handlers.renderRowsList();
+  },
+  rowTypeChanged(){
+    const type = document.getElementById('row-type').value;
+    const source = type==='the-loai' ? State.genres : type==='quoc-gia' ? State.countries : DANH_SACH_OPTIONS;
+    document.getElementById('row-name-list').innerHTML = (source||[]).map(o=>`<option value="${Utils.escapeHtml(o.name)}"></option>`).join('');
+  },
+  resolveRowByName(type, typedName){
+    const source = type==='the-loai' ? State.genres : type==='quoc-gia' ? State.countries : DANH_SACH_OPTIONS;
+    const key = Utils._normKey(typedName);
+    if(!key) return null;
+    return (source||[]).find(o=>Utils._normKey(o.name)===key) || null;
+  },
+  renderRowsList(){
+    const total = State.homepageRows.length;
+    document.getElementById('rows-count').textContent = total;
+    document.getElementById('nav-badge-rows').textContent = total;
+    const filterKey = (State.rowsFilter||'').trim().toLowerCase();
+    const entries = State.homepageRows.map((r,i)=>({r,i})).filter(({r})=>!filterKey || (r.title||'').toLowerCase().includes(filterKey));
+    const listEl = document.getElementById('rows-list');
+    if(!total) listEl.innerHTML = `<div class="empty-state">Chưa có dòng phim nào. Thêm dòng mới ở trên.</div>`;
+    else if(!entries.length) listEl.innerHTML = `<div class="empty-state">Không tìm thấy dòng phim khớp "${Utils.escapeHtml(State.rowsFilter)}".</div>`;
+    else listEl.innerHTML = entries.map(({r,i})=>renderRowItem(r,i,total)).join('');
+  },
+  filterRows(val){ State.rowsFilter = val; Handlers.renderRowsList(); },
+  addRow(){
+    const title = document.getElementById('row-title').value.trim();
+    const type = document.getElementById('row-type').value;
+    const typedName = document.getElementById('row-name').value.trim();
+    const limit = Math.min(Math.max(parseInt(document.getElementById('row-limit').value)||12,4),24);
+    const rank = document.getElementById('row-rank').checked;
+    const popularity = document.getElementById('row-popularity').checked;
+
+    if(!title){ Utils.toast('Vui lòng nhập tên dòng phim.','error'); return; }
+    if(!typedName){ Utils.toast('Vui lòng gõ tên thể loại/quốc gia/danh sách.','error'); return; }
+    const matched = Handlers.resolveRowByName(type, typedName);
+    if(!matched){ Utils.toast(`Không tìm thấy "${typedName}" trong danh sách ${rowTypeLabel(type)}. Chọn đúng tên gợi ý.`,'error'); return; }
+    if(State.homepageRows.some(r=>r.type===type && r.slug===matched.slug)){ Utils.toast(`Đã có dòng phim khác dùng "${typedName}" rồi.`,'error'); return; }
+    if(State.homepageRows.length>=30){ Utils.toast('Đã đạt tối đa 30 dòng phim.','error'); return; }
+
+    State.homepageRows.push({title, type, slug: matched.slug, limit, rank, popularity, hidden:false, excludedSlugs:[]});
+    Handlers.renderRowsList();
+    document.getElementById('row-title').value=''; document.getElementById('row-name').value='';
+    Utils.toast(`Đã thêm dòng "${title}" — nhớ bấm "Lưu tất cả".`);
+  },
+  removeRow(index){
+    const row = State.homepageRows[index];
+    if(!row) return;
+    const warn = row.isDefault ? ' Đây là dòng mặc định, có thể lấy lại qua "Khôi phục mặc định".' : '';
+    Modal.open('Xoá dòng phim?', `Xoá dòng "${row.title}"?${warn}`, ()=>{
+      State.homepageRows.splice(index,1);
+      State.rowMoviesCache = {};
+      Handlers.renderRowsList();
+      Utils.toast(`Đã xoá dòng "${row.title}" — nhớ bấm "Lưu tất cả".`);
+    }, 'Xoá dòng phim');
+  },
+  moveRow(index, dir){
+    const target = index+dir;
+    if(target<0 || target>=State.homepageRows.length) return;
+    const arr = State.homepageRows;
+    [arr[index],arr[target]] = [arr[target],arr[index]];
+    State.rowMoviesCache = {};
+    Handlers.renderRowsList();
+  },
+  toggleRowHidden(index){ State.homepageRows[index].hidden = !State.homepageRows[index].hidden; Handlers.renderRowsList(); },
+  renameRow(index){
+    const row = State.homepageRows[index];
+    if(!row) return;
+    const newTitle = prompt('Nhập tên mới cho dòng phim:', row.title);
+    if(newTitle===null) return;
+    const trimmed = newTitle.trim().slice(0,60);
+    if(!trimmed){ Utils.toast('Tên dòng phim không được để trống.','error'); return; }
+    row.title = trimmed;
+    Handlers.renderRowsList();
+    Utils.toast('Đã đổi tên — nhớ bấm "Lưu tất cả".');
+  },
+  async toggleRowMovies(index){
+    const panel = document.getElementById(`row-movies-panel-${index}`);
+    if(!panel) return;
+    const row = State.homepageRows[index];
+    if(!row) return;
+    if(panel.dataset.open==='1'){ panel.dataset.open='0'; panel.innerHTML=''; return; }
+    panel.dataset.open='1';
+    panel.innerHTML = renderRowMoviesPanel(row, index, [], true);
+    try{
+      const fetchLimit = Math.min(Math.max(row.limit*3,30),60);
+      const res = await MovieAPI.getList(row.type, row.slug, fetchLimit);
+      const movies = res?.data?.items || res?.items || [];
+      State.rowMoviesCache[index] = movies;
+      if(panel.dataset.open==='1') panel.innerHTML = renderRowMoviesPanel(row, index, movies, false);
+    }catch(e){ if(panel.dataset.open==='1') panel.innerHTML = renderRowMoviesPanel(row, index, [], false); }
+  },
+  toggleExcludeMovie(index, slug){
+    const row = State.homepageRows[index];
+    if(!row) return;
+    if(!Array.isArray(row.excludedSlugs)) row.excludedSlugs=[];
+    const pos = row.excludedSlugs.indexOf(slug);
+    if(pos>=0) row.excludedSlugs.splice(pos,1); else row.excludedSlugs.push(slug);
+    const panel = document.getElementById(`row-movies-panel-${index}`);
+    const movies = State.rowMoviesCache[index] || [];
+    if(panel) panel.innerHTML = renderRowMoviesPanel(row, index, movies, false);
+    Handlers.renderRowsList();
+  },
+  resetRows(){
+    Modal.open('Khôi phục mặc định?', 'Mọi tuỳ chỉnh (đổi tên, ẩn, xoá, ẩn phim lẻ) và các dòng tự thêm sẽ mất. Nhớ bấm "Lưu tất cả" sau khi khôi phục.', ()=>{
+      State.homepageRows = [];
+      State.rowMoviesCache = {};
+      Handlers.renderRowsList();
+      Utils.toast('Danh sách dòng phim đã được xoá về rỗng. Tự thêm lại dòng mặc định bạn muốn, hoặc bấm "Lưu tất cả" để áp dụng danh sách rỗng.');
+    }, 'Khôi phục');
+  },
+  async saveRows(){
+    try{
+      const res = await AdminAPI.saveRows(State.homepageRows);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success) Utils.toast('Đã lưu các dòng phim!');
+      else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Bài viết ---------- */
+  async loadPosts(){
+    try{
+      const [postsData, profileData] = await Promise.all([AdminAPI.getPosts(), AdminAPI.getProfile().catch(()=>null)]);
+      State.posts = postsData.items || [];
+      if(profileData?.name){
+        State.profile = {name: profileData.name, avatar: profileData.avatar||''};
+        Handlers.syncProfileUI();
+      }
+    }catch(e){ State.posts = State.posts||[]; }
+    document.getElementById('posts-count').textContent = State.posts.length;
+    document.getElementById('nav-badge-posts').textContent = State.posts.length;
+    document.getElementById('posts-list').innerHTML = State.posts.length
+      ? State.posts.map(renderPostItem).join('')
+      : `<div class="empty-state">Chưa có bài viết nào.</div>`;
+  },
+  syncProfileUI(){
+    const avatar = State.profile.avatar || '';
+    const name = State.profile.name || 'KTuongFX';
+    document.getElementById('mini-avatar').src = avatar;
+    document.getElementById('mini-name').textContent = name;
+    document.getElementById('composer-avatar').src = avatar;
+    document.getElementById('profile-avatar-preview').src = avatar;
+    document.getElementById('profile-name').value = name;
+  },
+  pickPostImage(file){
+    if(!file) return;
+    State.pendingPostImage = file;
+    document.getElementById('post-img-preview').src = URL.createObjectURL(file);
+    document.getElementById('post-img-preview-wrap').style.display = 'block';
+  },
+  removePostImage(){
+    State.pendingPostImage = null;
+    document.getElementById('post-img-preview-wrap').style.display = 'none';
+    document.getElementById('post-img-input').value = '';
+  },
+  async uploadImageToGithub(file, folder){
+    if(!file) return null;
+    if(file.size > 5*1024*1024){ Utils.toast('Ảnh quá lớn (tối đa 5MB).','error'); return null; }
+    const dataBase64 = await fileToRawBase64(file);
+    const res = await AdminAPI.uploadImage(dataBase64, file.name, folder);
+    const data = await res.json().catch(()=>({}));
+    if(res.ok && data.success) return data.url;
+    if(data.error === 'github_not_configured') Utils.toast('Chưa cấu hình GitHub trên Worker (GITHUB_TOKEN/GITHUB_REPO).','error');
+    else Utils.toast('Tải ảnh lên thất bại, thử lại sau.','error');
+    return null;
+  },
+  async createPost(){
+    const textarea = document.getElementById('post-content');
+    const content = (textarea.value||'').trim();
+    const btn = document.getElementById('post-submit-btn');
+    if(!content && !State.pendingPostImage) return;
+    btn.disabled = true; btn.textContent = 'Đang đăng…';
+    let images = [];
+    if(State.pendingPostImage){
+      const url = await Handlers.uploadImageToGithub(State.pendingPostImage, 'posts');
+      if(url) images = [url];
+    }
+    const newPost = {id: crypto.randomUUID(), content, images, created_at: new Date().toISOString()};
+    const updated = [newPost, ...State.posts];
+    try{
+      const res = await AdminAPI.savePosts(updated);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success){
+        State.posts = updated;
+        textarea.value = '';
+        Handlers.removePostImage();
+        document.getElementById('posts-list').innerHTML = State.posts.map(renderPostItem).join('');
+        document.getElementById('posts-count').textContent = State.posts.length;
+        document.getElementById('nav-badge-posts').textContent = State.posts.length;
+        Utils.toast('Đã đăng bài viết!');
+      } else Utils.toast('Đăng bài thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+    finally{ btn.disabled=false; btn.textContent='Đăng bài'; }
+  },
+  deletePost(id){
+    Modal.open('Xoá bài viết?', 'Bài viết sẽ bị xoá khỏi bảng tin ngay lập tức.', async ()=>{
+      const updated = State.posts.filter(p=>p.id!==id);
+      try{
+        const res = await AdminAPI.savePosts(updated);
+        const data = await res.json().catch(()=>({}));
+        if(res.ok && data.success){
+          State.posts = updated;
+          document.getElementById('posts-list').innerHTML = State.posts.length ? State.posts.map(renderPostItem).join('') : `<div class="empty-state">Chưa có bài viết nào.</div>`;
+          document.getElementById('posts-count').textContent = State.posts.length;
+          document.getElementById('nav-badge-posts').textContent = State.posts.length;
+          Utils.toast('Đã xoá bài viết.');
+        } else Utils.toast('Xoá thất bại, thử lại sau.','error');
+      }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+    }, 'Xoá bài viết');
+  },
+
+  /* ---------- Hồ sơ ---------- */
+  async loadProfileView(){
+    try{
+      const data = await AdminAPI.getProfile();
+      if(data?.name) State.profile = {name:data.name, avatar:data.avatar||''};
+    }catch(e){}
+    Handlers.syncProfileUI();
+  },
+  async pickAvatar(file){
+    if(!file) return;
+    const preview = document.getElementById('profile-avatar-preview');
+    const statusEl = document.getElementById('avatar-status');
+    preview.src = URL.createObjectURL(file);
+    statusEl.style.display='block'; statusEl.textContent = 'Đang tải ảnh đại diện lên GitHub…';
+    const url = await Handlers.uploadImageToGithub(file, 'avatar');
+    if(!url){ statusEl.style.display='none'; return; }
+    State.profile.avatar = url;
+    preview.src = url;
+    statusEl.textContent = 'Đã tải ảnh lên — nhớ bấm "Lưu hồ sơ" để áp dụng.';
+    Utils.toast('Đã tải ảnh đại diện lên GitHub!');
+  },
+  async saveProfile(){
+    const name = document.getElementById('profile-name').value.trim();
+    if(!name){ Utils.toast('Vui lòng nhập tên hiển thị.','error'); return; }
+    const avatar = State.profile.avatar || '';
+    try{
+      const res = await AdminAPI.saveProfile(name, avatar);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success){
+        State.profile = {name:data.name, avatar:data.avatar||''};
+        Handlers.syncProfileUI();
+        document.getElementById('avatar-status').style.display='none';
+        Utils.toast('Đã lưu hồ sơ hiển thị!');
+      } else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Đổi mật khẩu quản trị ---------- */
+  async changePassword(){
+    const oldPwd = document.getElementById('pwd-old').value;
+    const newPwd = document.getElementById('pwd-new').value;
+    const newPwd2 = document.getElementById('pwd-new2').value;
+    const statusEl = document.getElementById('pwd-status');
+    const showStatus = (msg, isErr) => { statusEl.style.display='block'; statusEl.textContent = msg; statusEl.style.color = isErr ? 'var(--danger)' : 'var(--success)'; };
+
+    if(!oldPwd){ Utils.toast('Vui lòng nhập mật khẩu hiện tại.','error'); return; }
+    if(newPwd.length < 6){ Utils.toast('Mật khẩu mới cần tối thiểu 6 ký tự.','error'); return; }
+    if(newPwd !== newPwd2){ Utils.toast('Mật khẩu mới nhập lại không khớp.','error'); return; }
+
+    try{
+      const res = await AdminAPI.changePassword(oldPwd, newPwd);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success){
+        document.getElementById('pwd-old').value = '';
+        document.getElementById('pwd-new').value = '';
+        document.getElementById('pwd-new2').value = '';
+        showStatus('Đã đổi mật khẩu thành công.', false);
+        Utils.toast('Đã đổi mật khẩu quản trị!');
+      } else {
+        showStatus(data.error === 'wrong_old_password' ? 'Mật khẩu hiện tại không đúng.' : 'Đổi mật khẩu thất bại, thử lại sau.', true);
+      }
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Sao lưu & khôi phục ---------- */
+  async exportBackup(){
+    Utils.toast('Đang thu thập dữ liệu…');
+    try{
+      const [rec, rows, posts, profile, playlists, actors, maintenance] = await Promise.all([
+        AdminAPI.getRecommended().catch(()=>({items:[]})),
+        AdminAPI.getRows().catch(()=>({rows:[]})),
+        AdminAPI.getPosts().catch(()=>({items:[]})),
+        AdminAPI.getProfile().catch(()=>({})),
+        AdminAPI.getPlaylists().catch(()=>({playlists:[]})),
+        AdminAPI.getActors().catch(()=>({items:[]})),
+        AdminAPI.getMaintenance().catch(()=>({enabled:false,image:'',text:''})),
+      ]);
+      const backup = {
+        exported_at: new Date().toISOString(),
+        source: 'KTuongFX Control Panel',
+        recommended: rec.items || [],
+        homepageRows: rows.rows || [],
+        posts: posts.items || [],
+        profile: {name: profile.name||'KTuongFX', avatar: profile.avatar||''},
+        playlists: playlists.playlists || [],
+        actors: actors.items || [],
+        maintenance: {enabled: !!maintenance.enabled, image: maintenance.image||'', text: maintenance.text||''},
+      };
+      const stamp = new Date().toISOString().slice(0,10);
+      Utils.downloadJSON(backup, `ktuongfx-backup-${stamp}.json`);
+      Utils.toast('Đã xuất file sao lưu!');
+    }catch(e){ Utils.toast('Không xuất được sao lưu, thử lại sau.','error'); }
+  },
+  previewRestore(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try{ parsed = JSON.parse(reader.result); }catch(e){ Utils.toast('File không phải JSON hợp lệ.','error'); return; }
+      const recCount = (parsed.recommended||[]).length;
+      const rowsCount = (parsed.homepageRows||[]).length;
+      const postsCount = (parsed.posts||[]).length;
+      const playlistsCount = (parsed.playlists||[]).length;
+      const actorsCount = (parsed.actors||[]).length;
+      const profileName = parsed.profile?.name || '(không có)';
+      document.getElementById('restore-preview').innerHTML = `
+        <div class="panel" style="background:var(--card); padding:16px;">
+          <p style="margin:0 0 10px; font-size:13px; font-weight:700;">Nội dung file sao lưu</p>
+          <p style="font-size:12.5px; color:var(--muted); margin:0 0 4px;">• ${recCount} phim đề xuất</p>
+          <p style="font-size:12.5px; color:var(--muted); margin:0 0 4px;">• ${rowsCount} dòng phim</p>
+          <p style="font-size:12.5px; color:var(--muted); margin:0 0 4px;">• ${postsCount} bài viết</p>
+          <p style="font-size:12.5px; color:var(--muted); margin:0 0 4px;">• ${playlistsCount} playlist tuỳ chỉnh</p>
+          <p style="font-size:12.5px; color:var(--muted); margin:0 0 4px;">• ${actorsCount} diễn viên yêu thích</p>
+          <p style="font-size:12.5px; color:var(--muted); margin:0 0 12px;">• Hồ sơ hiển thị: ${Utils.escapeHtml(profileName)}</p>
+          <button class="btn btn-danger" onclick='Handlers.confirmRestore(${JSON.stringify(JSON.stringify(parsed))})'>⚠️ Ghi đè dữ liệu hiện tại bằng file này</button>
+        </div>`;
+    };
+    reader.readAsText(file);
+  },
+  confirmRestore(jsonStr){
+    const parsed = JSON.parse(jsonStr);
+    Modal.open('Khôi phục dữ liệu?', 'Toàn bộ phim đề xuất, dòng phim, bài viết, playlist, diễn viên và hồ sơ hiện tại sẽ bị GHI ĐÈ bằng dữ liệu trong file. Hành động này không thể hoàn tác.', async ()=>{
+      Utils.toast('Đang khôi phục…');
+      try{
+        await AdminAPI.saveRecommended(parsed.recommended||[]);
+        await AdminAPI.saveRows(parsed.homepageRows||[]);
+        await AdminAPI.savePosts(parsed.posts||[]);
+        if(parsed.profile?.name) await AdminAPI.saveProfile(parsed.profile.name, parsed.profile.avatar||'');
+        await AdminAPI.savePlaylists(parsed.playlists||[]);
+        await AdminAPI.saveActors(parsed.actors||[]);
+        if(parsed.maintenance) await AdminAPI.saveMaintenance(parsed.maintenance);
+        Utils.toast('Khôi phục thành công! Đang tải lại dữ liệu…');
+        document.getElementById('restore-preview').innerHTML = '';
+        document.getElementById('restore-file-input').value = '';
+        Handlers.loadDashboard();
+      }catch(e){ Utils.toast('Khôi phục thất bại giữa chừng, kiểm tra lại từng mục.','error'); }
+    }, 'Ghi đè & khôi phục');
+  },
+
+  /* ---------- Playlist tuỳ chỉnh (nhiều danh sách như "Phim đề xuất") ---------- */
+  async loadPlaylists(){
+    document.getElementById('pl-list').innerHTML = '<div class="loading-box"><span class="spinner"></span> Đang tải…</div>';
+    try{
+      const data = await AdminAPI.getPlaylists();
+      State.playlists = (data.playlists || []).map(p => ({ items:[], position:'top', afterRowIndex:1, hidden:false, ...p }));
+    }catch(e){ State.playlists = []; }
+    State.plExpanded = {}; State.plSearchResults = {};
+    Handlers.renderPlaylistsList();
+  },
+  plPositionChanged(){
+    document.getElementById('pl-after-row-wrap').style.display = document.getElementById('pl-position').value==='middle_rows' ? 'block' : 'none';
+  },
+  renderPlaylistsList(){
+    const total = State.playlists.length;
+    document.getElementById('pl-count').textContent = total;
+    const navBadge = document.getElementById('nav-badge-playlists');
+    if(navBadge) navBadge.textContent = total;
+    const listEl = document.getElementById('pl-list');
+    listEl.innerHTML = total ? State.playlists.map((p,i)=>renderPlaylistItem(p,i,total)).join('') : `<div class="empty-state">Chưa có playlist nào. Tạo playlist mới ở trên.</div>`;
+  },
+  addPlaylist(){
+    const titleInput = document.getElementById('pl-title');
+    const title = titleInput.value.trim();
+    if(!title){ Utils.toast('Vui lòng nhập tên playlist.','error'); return; }
+    const position = document.getElementById('pl-position').value;
+    const afterRowIndex = Number(document.getElementById('pl-after-row').value) || 1;
+    State.playlists.push({ id: crypto.randomUUID(), title, position, afterRowIndex, hidden:false, items:[] });
+    titleInput.value = '';
+    Handlers.renderPlaylistsList();
+    Utils.toast(`Đã tạo playlist "${title}" — nhớ bấm "Lưu tất cả playlist".`);
+  },
+  removePlaylist(index){
+    Modal.open('Xoá playlist?', 'Playlist và toàn bộ phim trong đó sẽ bị xoá.', ()=>{
+      State.playlists.splice(index,1);
+      State.plExpanded = {}; State.plSearchResults = {};
+      Handlers.renderPlaylistsList();
+      Utils.toast('Đã xoá playlist — nhớ bấm "Lưu tất cả playlist".');
+    }, 'Xoá playlist');
+  },
+  movePlaylist(index, dir){
+    const target = index+dir;
+    if(target<0 || target>=State.playlists.length) return;
+    const arr = State.playlists;
+    [arr[index],arr[target]] = [arr[target],arr[index]];
+    State.plExpanded = {}; State.plSearchResults = {};
+    Handlers.renderPlaylistsList();
+  },
+  togglePlaylistHidden(index){ State.playlists[index].hidden = !State.playlists[index].hidden; Handlers.renderPlaylistsList(); },
+  togglePlaylistExpand(index){ State.plExpanded[index] = !State.plExpanded[index]; Handlers.renderPlaylistsList(); },
+  renamePlaylist(index){
+    const pl = State.playlists[index];
+    const newTitle = prompt('Tên playlist mới:', pl.title);
+    if(newTitle && newTitle.trim()) pl.title = newTitle.trim();
+    const newPos = prompt('Vị trí hiển thị (top / after_recommended / middle_rows / bottom):', pl.position);
+    if(newPos && ['top','after_recommended','middle_rows','bottom'].includes(newPos.trim())) pl.position = newPos.trim();
+    if(pl.position === 'middle_rows'){
+      const idx = prompt('Hiện sau dòng phim thứ mấy?', pl.afterRowIndex||1);
+      if(idx) pl.afterRowIndex = Number(idx)||1;
+    }
+    Handlers.renderPlaylistsList();
+  },
+  searchPlaylistMovies(index, val){
+    const kw = val.trim();
+    if(State.plSearchTimeout) clearTimeout(State.plSearchTimeout);
+    const el = document.getElementById(`pl-search-results-${index}`);
+    if(!el) return;
+    if(!kw){ el.innerHTML=''; return; }
+    el.innerHTML = `<div class="loading-box" style="grid-column:1/-1;"><span class="spinner"></span> Đang tìm…</div>`;
+    State.plSearchTimeout = setTimeout(async ()=>{
+      const results = await MovieAPI.search(kw, 24);
+      State.plSearchResults[index] = results;
+      const el2 = document.getElementById(`pl-search-results-${index}`);
+      if(!el2) return;
+      el2.innerHTML = results.length ? results.map((m,i)=>renderPlaylistSearchCard(index,m,i)).join('') : `<div class="empty-state" style="grid-column:1/-1;">Không tìm thấy phim phù hợp.</div>`;
+    }, 400);
+  },
+  addPlaylistMovie(pIndex, i){
+    const movie = (State.plSearchResults[pIndex]||[])[i];
+    const pl = State.playlists[pIndex];
+    if(!movie || !pl) return;
+    if(pl.items.some(m=>m.slug===movie.slug && m.sourceProvider===movie.sourceProvider)){ Utils.toast('Phim này đã có trong playlist.','error'); return; }
+    pl.items.push(movie);
+    Handlers.renderPlaylistsList();
+    Utils.toast(`Đã thêm "${movie.name}" vào "${pl.title}" — nhớ bấm "Lưu tất cả playlist".`);
+  },
+  removePlaylistMovie(pIndex, i){ State.playlists[pIndex].items.splice(i,1); Handlers.renderPlaylistsList(); },
+  movePlaylistMovie(pIndex, i, dir){
+    const items = State.playlists[pIndex].items;
+    const target = i+dir;
+    if(target<0 || target>=items.length) return;
+    [items[i],items[target]] = [items[target],items[i]];
+    Handlers.renderPlaylistsList();
+  },
+  async savePlaylists(){
+    try{
+      const res = await AdminAPI.savePlaylists(State.playlists);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success) Utils.toast('Đã lưu tất cả playlist!');
+      else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Diễn viên yêu thích (dữ liệu ảnh/tên từ TMDB) ---------- */
+  async loadActors(){
+    document.getElementById('actor-list').innerHTML = '<div class="loading-box"><span class="spinner"></span> Đang tải…</div>';
+    try{
+      const data = await AdminAPI.getActors();
+      State.actors = data.items || [];
+    }catch(e){ State.actors = []; }
+    Handlers.renderActorsList();
+  },
+  renderActorsList(){
+    const total = State.actors.length;
+    document.getElementById('actor-count').textContent = total;
+    const navBadge = document.getElementById('nav-badge-actors');
+    if(navBadge) navBadge.textContent = total;
+    const el = document.getElementById('actor-list');
+    el.innerHTML = total ? State.actors.map((a,i)=>renderActorRow(a,i,total)).join('') : `<div class="empty-state">Chưa có diễn viên nào. Tìm ở trên để thêm.</div>`;
+  },
+  searchActors(val){
+    const kw = val.trim();
+    if(State.actorSearchTimeout) clearTimeout(State.actorSearchTimeout);
+    const el = document.getElementById('actor-search-results');
+    if(!kw){ el.innerHTML=''; return; }
+    el.innerHTML = `<div class="loading-box" style="grid-column:1/-1;"><span class="spinner"></span> Đang tìm…</div>`;
+    State.actorSearchTimeout = setTimeout(async ()=>{
+      const data = await TMDBAPI.searchPerson(kw);
+      State.actorSearchResults = (data?.results || []).filter(p=>p.name);
+      el.innerHTML = State.actorSearchResults.length ? State.actorSearchResults.map((a,i)=>renderActorSearchCard(a,i)).join('') : `<div class="empty-state" style="grid-column:1/-1;">Không tìm thấy diễn viên phù hợp.</div>`;
+    }, 400);
+  },
+  pickActorFromSearch(i){
+    const p = State.actorSearchResults[i];
+    if(!p) return;
+    if(State.actors.some(a=>a.tmdbId===p.id)){ Utils.toast('Diễn viên này đã có trong danh sách.','error'); return; }
+    State.pendingActor = p;
+    const photo = p.profile_path ? `https://image.tmdb.org/t/p/w300${p.profile_path}` : 'https://placehold.co/200x300/1c1f2e/94a3b8?text=No+Photo';
+    document.getElementById('actor-pending-photo').src = photo;
+    document.getElementById('actor-pending-name').textContent = p.name;
+    document.getElementById('actor-pending-bio').value = '';
+    document.getElementById('actor-pending-position').value = 'top';
+    document.getElementById('actor-after-row-wrap').style.display = 'none';
+    document.getElementById('actor-pending-panel').style.display = 'block';
+    document.getElementById('actor-pending-panel').scrollIntoView({behavior:'smooth', block:'center'});
+  },
+  actorPositionChanged(){
+    document.getElementById('actor-after-row-wrap').style.display = document.getElementById('actor-pending-position').value==='middle_rows' ? 'block' : 'none';
+  },
+  cancelPendingActor(){
+    State.pendingActor = null;
+    document.getElementById('actor-pending-panel').style.display = 'none';
+  },
+  confirmAddActor(){
+    const p = State.pendingActor;
+    if(!p) return;
+    const bio = document.getElementById('actor-pending-bio').value.trim();
+    const position = document.getElementById('actor-pending-position').value;
+    const afterRowIndex = Number(document.getElementById('actor-after-row').value) || 1;
+    const photo = p.profile_path ? `https://image.tmdb.org/t/p/w300${p.profile_path}` : '';
+    State.actors.push({ id: crypto.randomUUID(), tmdbId: p.id, name: p.name, photo, bio, position, afterRowIndex });
+    Handlers.cancelPendingActor();
+    Handlers.renderActorsList();
+    Utils.toast(`Đã thêm "${p.name}" — nhớ bấm "Lưu danh sách".`);
+  },
+  editActor(index){
+    const a = State.actors[index];
+    const newBio = prompt('Tiểu sử mới:', a.bio||'');
+    if(newBio !== null) a.bio = newBio.trim();
+    const newPos = prompt('Vị trí hiển thị (top / after_recommended / middle_rows / bottom):', a.position);
+    if(newPos && ['top','after_recommended','middle_rows','bottom'].includes(newPos.trim())) a.position = newPos.trim();
+    if(a.position === 'middle_rows'){
+      const idx = prompt('Hiện sau dòng phim thứ mấy?', a.afterRowIndex||1);
+      if(idx) a.afterRowIndex = Number(idx)||1;
+    }
+    Handlers.renderActorsList();
+  },
+  removeActor(index){ State.actors.splice(index,1); Handlers.renderActorsList(); },
+  moveActor(index, dir){
+    const target = index+dir;
+    if(target<0 || target>=State.actors.length) return;
+    const arr = State.actors;
+    [arr[index],arr[target]] = [arr[target],arr[index]];
+    Handlers.renderActorsList();
+  },
+  async saveActors(){
+    try{
+      const res = await AdminAPI.saveActors(State.actors);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success) Utils.toast('Đã lưu danh sách diễn viên!');
+      else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Freeze web (chế độ bảo trì tạm thời) ---------- */
+  async loadFreeze(){
+    try{
+      const data = await AdminAPI.getMaintenance();
+      State.maintenance = { enabled: !!data.enabled, image: data.image||'', text: data.text||'' };
+    }catch(e){ State.maintenance = { enabled:false, image:'', text:'' }; }
+    document.getElementById('freeze-toggle').checked = State.maintenance.enabled;
+    document.getElementById('freeze-img-preview').src = State.maintenance.image || '';
+    document.getElementById('freeze-text').value = State.maintenance.text || '';
+    Handlers.renderFreezeStatus();
+    Handlers.renderFreezePreview();
+    Handlers.syncFreezeBanner();
+  },
+  renderFreezeStatus(){
+    const tag = document.getElementById('freeze-status-tag');
+    tag.innerHTML = State.maintenance.enabled
+      ? `<span class="tag tag-danger">🔴 Web đang bị TẠM DỪNG cho người xem</span>`
+      : `<span class="tag tag-success">🟢 Web đang hoạt động bình thường</span>`;
+  },
+  toggleFreezePreview(){
+    State.maintenance.enabled = document.getElementById('freeze-toggle').checked;
+    Handlers.renderFreezeStatus();
+  },
+  async pickFreezeImage(file){
+    if(!file) return;
+    document.getElementById('freeze-img-preview').src = URL.createObjectURL(file);
+    const url = await Handlers.uploadImageToGithub(file, 'freeze');
+    if(!url) return;
+    State.maintenance.image = url;
+    document.getElementById('freeze-img-preview').src = url;
+    Handlers.renderFreezePreview();
+    Utils.toast('Đã tải ảnh lên — nhớ bấm "Lưu & áp dụng".');
+  },
+  renderFreezePreview(){
+    const img = document.getElementById('freeze-preview-img');
+    const text = document.getElementById('freeze-preview-text');
+    const currentText = document.getElementById('freeze-text').value.trim() || State.maintenance.text;
+    if(State.maintenance.image){ img.src = State.maintenance.image; img.style.display='block'; } else { img.style.display='none'; }
+    text.textContent = currentText || 'Chưa có nội dung.';
+  },
+  syncFreezeBanner(){
+    const banner = document.getElementById('freeze-banner');
+    if(!banner) return;
+    banner.style.display = State.maintenance.enabled ? 'flex' : 'none';
+  },
+  async saveFreeze(){
+    State.maintenance.enabled = document.getElementById('freeze-toggle').checked;
+    State.maintenance.text = document.getElementById('freeze-text').value.trim();
+    try{
+      const res = await AdminAPI.saveMaintenance(State.maintenance);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success){
+        Utils.toast(State.maintenance.enabled ? 'Đã BẬT freeze — người xem sẽ thấy trang tạm dừng ngay.' : 'Đã TẮT freeze — web hoạt động lại bình thường.');
+        Handlers.renderFreezeStatus();
+        Handlers.syncFreezeBanner();
+      } else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+
+  /* ---------- Cấu hình Intro/Site (lớp nền + override, luôn khôi phục được mặc định) ---------- */
+  async loadSiteConfig(){
+    try{
+      State.siteConfig = await AdminAPI.getSiteConfig();
+    }catch(e){ State.siteConfig = {}; }
+    const cfg = State.siteConfig || {};
+    document.getElementById('site-intro-video').value = cfg.introVideoUrl || '';
+    document.getElementById('site-intro-logo').value = cfg.introLogoUrl || '';
+    document.getElementById('site-name').value = cfg.siteName || '';
+    // Không có override -> mặc định gốc là "luôn hiện Intro" (đúng như CONFIG.SHOW_INTRO_EVERY_VISIT=true trong index.html)
+    document.getElementById('site-intro-every-visit').checked = cfg.showIntroEveryVisit === undefined ? true : !!cfg.showIntroEveryVisit;
+    document.getElementById('site-config-status').textContent = Object.keys(cfg).length
+      ? 'Đang có tuỳ chỉnh áp dụng lên lớp nền mặc định.'
+      : 'Chưa có tuỳ chỉnh nào — trang chủ đang dùng đúng mặc định gốc.';
+  },
+  async saveSiteConfig(){
+    const cfg = {
+      introVideoUrl: document.getElementById('site-intro-video').value.trim(),
+      introLogoUrl: document.getElementById('site-intro-logo').value.trim(),
+      siteName: document.getElementById('site-name').value.trim(),
+      showIntroEveryVisit: document.getElementById('site-intro-every-visit').checked,
+    };
+    try{
+      const res = await AdminAPI.saveSiteConfig(cfg);
+      const data = await res.json().catch(()=>({}));
+      if(res.ok && data.success){
+        State.siteConfig = data.config || {};
+        Utils.toast('Đã lưu cấu hình Intro/Site — trang chủ áp dụng ngay lần tải sau.');
+        Handlers.loadSiteConfig();
+      } else Utils.toast('Lưu thất bại, thử lại sau.','error');
+    }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+  },
+  resetSiteConfig(){
+    Modal.open('Khôi phục mặc định gốc?', 'Mọi tuỳ chỉnh Intro video/logo/tên site sẽ bị xoá, trang chủ quay lại đúng bản gốc hardcode trong index.html.', async ()=>{
+      try{
+        const res = await AdminAPI.saveSiteConfig({});
+        const data = await res.json().catch(()=>({}));
+        if(res.ok && data.success){
+          Utils.toast('Đã khôi phục về mặc định gốc.');
+          Handlers.loadSiteConfig();
+        } else Utils.toast('Khôi phục thất bại, thử lại sau.','error');
+      }catch(e){ if(e.message!=='unauthorized') Utils.toast('Lỗi kết nối, thử lại sau.','error'); }
+    }, 'Khôi phục mặc định');
+  },
+
+  /* ---------- Quyền mở rộng ---------- */
+  renderPower(){
+    const active = [
+      ['🔐','Đăng nhập bằng mật khẩu quản trị (token)', 'Xác thực qua Worker, token lưu cục bộ trên trình duyệt.'],
+      ['🔑','Đổi mật khẩu ngay trong panel', 'Đổi mật khẩu tại mục "Hồ sơ", yêu cầu nhập đúng mật khẩu hiện tại. Lưu hash SHA-256 vào KV, không cần đụng vào biến môi trường của Worker.'],
+      ['⭐','Toàn quyền phim đề xuất', 'Tìm, thêm, xoá, lưu danh sách phim đề xuất hiển thị ở trang chủ.'],
+      ['🎬','Toàn quyền dòng phim & thể loại', 'Thêm/xoá/đổi tên/sắp xếp dòng phim, ẩn cả dòng hoặc ẩn từng phim riêng lẻ trong dòng.'],
+      ['🎞️','Playlist tuỳ chỉnh', 'Dùng chung endpoint /custom-rows với dữ liệu trang chủ (đã bỏ /playlists trùng lặp trước đây) — lưu và hiển thị thật ngay lập tức.'],
+      ['🌟','Diễn viên yêu thích (dữ liệu TMDB)', 'Thêm/sửa/xoá/sắp xếp diễn viên yêu thích, lưu ở /actors, trang chủ đọc để hiển thị.'],
+      ['🧊','Freeze web (tạm dừng toàn site)', 'Bật/tắt màn hình bảo trì toàn site kèm ảnh + chữ tuỳ chỉnh, lưu ở /maintenance.'],
+      ['🎬','Cấu hình Intro/Site', 'Đổi link Intro video, logo, bật/tắt hiện Intro mỗi lần mở web — theo mô hình lớp nền + override, luôn khôi phục được mặc định gốc.'],
+      ['📝','Đăng & xoá bài viết kèm ảnh', 'Bài viết + ảnh được tải lên GitHub qua Worker, hiển thị công khai trên bảng tin.'],
+      ['🖼️','Đổi tên & ảnh đại diện admin', 'Cập nhật hồ sơ hiển thị dùng chung cho mọi bài viết.'],
+      ['💾','Sao lưu & khôi phục toàn bộ dữ liệu', 'Xuất/nhập file JSON chứa toàn bộ cấu hình quản trị.'],
+    ];
+    document.getElementById('power-active').innerHTML = active.map(([icon,title,desc])=>`
+      <div class="power-card"><h4>${icon} ${title} <span class="tag tag-success" style="margin-left:auto;">Hoạt động</span></h4><p>${desc}</p></div>
+    `).join('');
+
+    const roadmap = [
+      ['👥','Nhiều tài khoản & phân quyền', 'Ví dụ: quyền chỉ-đăng-bài vs toàn quyền. Cần bảng người dùng + vai trò ở backend.'],
+      ['📜','Nhật ký hoạt động (audit log)', 'Ghi lại ai đổi gì, khi nào — quan trọng khi có nhiều admin. Cần lưu log ở KV/DB của Worker.'],
+      ['📊','Thống kê truy cập thực tế', 'Lượt xem, phim được xem nhiều nhất theo ngày/tuần. Cần tầng thu thập số liệu riêng.'],
+      ['💬','Kiểm duyệt bình luận người dùng', 'Nếu sau này web có tính năng bình luận, cần khu vực duyệt/ẩn/xoá bình luận.'],
+      ['⏰','Lên lịch đăng bài tự động', 'Soạn trước, chọn giờ đăng. Cần hàng đợi (queue) hoặc cron ở Worker.'],
+      ['🚫','Bộ lọc từ khoá bài viết', 'Tự động chặn từ ngữ không phù hợp trước khi đăng. Có thể làm phía client trước, xác thực lại ở Worker.'],
+    ];
+    document.getElementById('power-roadmap').innerHTML = roadmap.map(([icon,title,desc])=>`
+      <div class="power-card"><h4>${icon} ${title} <span class="tag tag-info" style="margin-left:auto;">Cần thêm API</span></h4><p>${desc}</p></div>
+    `).join('');
+  },
+
+  /* ---------- Boot ---------- */
+  async boot(){
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    Handlers.navigate('dashboard');
+    Handlers.checkStatus();
+    Handlers.checkFreezeBanner();
+    try{
+      const data = await AdminAPI.getProfile();
+      if(data?.name){ State.profile = {name:data.name, avatar:data.avatar||''}; Handlers.syncProfileUI(); }
+    }catch(e){}
+  },
+  async checkFreezeBanner(){
+    try{
+      const data = await AdminAPI.getMaintenance();
+      State.maintenance = { enabled: !!data.enabled, image: data.image||'', text: data.text||'' };
+    }catch(e){ /* endpoint có thể chưa tồn tại ở worker.js */ }
+    Handlers.syncFreezeBanner();
+  },
+  async checkStatus(){
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    try{
+      const res = await fetch(`${CONFIG.WORKER_BASE}/recommended`);
+      if(res.ok){ dot.className='status-dot on'; text.textContent='Đã kết nối Worker API'; }
+      else throw new Error();
+    }catch(e){ dot.className='status-dot off'; text.textContent='Không kết nối được Worker'; }
+  }
+};
+
+/* ============================================================
+   INSIGHTS — tab "Phim Hot & Điểm TMDB": lọc theo thể loại/quốc gia/năm,
+   phân loại theo quốc gia, xếp hạng theo điểm TMDB thật, mũi tên xu hướng
+   ngày/tuần (TMDB), và biểu đồ điểm trung bình theo thời gian (localStorage).
+   ============================================================ */
+const Insights = {
+  HISTORY_KEY: 'ktuong_cp_score_history',
+  MAX_HISTORY: 30,
+
+  async init(){
+    if(!State.genres.length || !State.countries.length){ try{ await MovieAPI.getAppData(); }catch(e){} }
+    if(!State.insightInited){
+      document.getElementById('insight-genre').innerHTML = '<option value="">Tất cả thể loại</option>' +
+        (State.genres||[]).map(g=>`<option value="${g.slug}">${Utils.escapeHtml(g.name)}</option>`).join('');
+      document.getElementById('insight-country').innerHTML = '<option value="">Tất cả quốc gia</option>' +
+        (State.countries||[]).map(c=>`<option value="${c.slug}">${Utils.escapeHtml(c.name)}</option>`).join('');
+      document.getElementById('insight-year').innerHTML = '<option value="">Tất cả năm</option>' +
+        INSIGHT_YEARS.map(y=>`<option value="${y}">${y}</option>`).join('');
+      State.insightInited = true;
+    }
+    Insights.drawChart(); // vẽ lại biểu đồ đã lưu (nếu có) ngay khi mở tab, không cần bấm phân tích
+    if(State.insightPool.length) Insights.renderAll();
+  },
+
+  // Gọi API danh sách phim theo bộ lọc; nếu đã chọn thể loại thì lấy thể loại làm nguồn chính
+  // (đồng thời gửi kèm country/year nếu API hỗ trợ), quốc gia làm nguồn chính nếu không chọn thể loại,
+  // rồi luôn lọc lại phía client theo đúng tiêu chí để đảm bảo chính xác dù API có hỗ trợ lọc kết hợp hay không.
+  async fetchPool(genreSlug, countrySlug, year, source){
+    const seen = new Set();
+    const merged = [];
+    const addAll = (list) => (list||[]).forEach(m => { if(m && m.slug && !seen.has(m.slug)){ seen.add(m.slug); merged.push(m); } });
+
+    const yearParam = year ? `&year=${encodeURIComponent(year)}` : '';
+    const countryParam = countrySlug ? `&country=${encodeURIComponent(countrySlug)}` : '';
+
+    try{
+      if(genreSlug){
+        const res = await MovieAPI.fetchJSON(`/v1/api/the-loai/${genreSlug}?limit=60${countryParam}${yearParam}`);
+        addAll(res?.data?.items);
+      } else if(countrySlug){
+        const res = await MovieAPI.fetchJSON(`/v1/api/quoc-gia/${countrySlug}?limit=60${yearParam}`);
+        addAll(res?.data?.items);
+      } else if(source === 'all'){
+        const [a,b,c] = await Promise.all([
+          MovieAPI.getList('danh-sach','phim-moi-cap-nhat',40),
+          MovieAPI.getList('danh-sach','phim-bo',40),
+          MovieAPI.getList('danh-sach','phim-le',40),
+        ]);
+        addAll(a?.data?.items); addAll(b?.data?.items); addAll(c?.data?.items);
+      } else {
+        const res = await MovieAPI.getList('danh-sach', source || 'phim-moi-cap-nhat', 60);
+        addAll(res?.data?.items);
+      }
+    }catch(e){}
+
+    // Lọc chắc chắn lại phía client theo đúng quốc gia/năm đã chọn (phòng trường hợp API bỏ qua tham số)
+    let items = merged;
+    if(countrySlug) items = items.filter(m => (m.country||[]).some(c => c.slug === countrySlug));
+    if(year) items = items.filter(m => String(m.year) === String(year));
+    return items;
+  },
+
+  async run(){
+    const btn = document.getElementById('insight-run-btn');
+    const hint = document.getElementById('insight-scanned-hint');
+    btn.disabled = true; btn.textContent = 'Đang quét dữ liệu…';
+    document.getElementById('insight-stat-grid').innerHTML = `<div class="loading-box"><span class="spinner"></span> Đang phân tích…</div>`;
+
+    const genreSlug = document.getElementById('insight-genre').value;
+    const countrySlug = document.getElementById('insight-country').value;
+    const year = document.getElementById('insight-year').value;
+    const source = document.getElementById('insight-source').value;
+
+    const items = await Insights.fetchPool(genreSlug, countrySlug, year, source);
+    items.forEach(m => { if(!m.sourceProvider) m.sourceProvider = 'OP'; });
+    State.insightPool = items;
+    State.insightCountryFilter = '';
+
+    btn.disabled = false; btn.textContent = '🔍 Phân tích ngay';
+    hint.textContent = items.length ? `Đã quét ${items.length} phim.` : 'Không lấy được dữ liệu, thử lại sau.';
+
+    if(!items.length){
+      document.getElementById('insight-stat-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Không tìm thấy phim phù hợp với bộ lọc này.</div>`;
+      document.getElementById('insight-country-grid').innerHTML = `<div class="empty-state">Chưa có dữ liệu.</div>`;
+      document.getElementById('insight-rank-list').innerHTML = `<div class="empty-state">Chưa có dữ liệu.</div>`;
+      return;
+    }
+
+    Insights.renderAll();
+    Insights.recordSnapshot();
+    Insights.loadTrendArrows(items.slice(0, 30));
+  },
+
+  score(m){
+    const va = m?.tmdb?.vote_average || 0;
+    const vc = m?.tmdb?.vote_count || 0;
+    return Math.round((va * 10 + Math.min(vc, 3000) / 30) * 10) / 10;
+  },
+
+  renderAll(){
+    const sorted = [...State.insightPool].sort((a,b) => Insights.score(b) - Insights.score(a));
+    Insights.renderStats(sorted);
+    Insights.renderCountryCards(sorted);
+    Insights.renderRankingList(
+      State.insightCountryFilter ? sorted.filter(m => (m.country||[]).some(c => c.slug === State.insightCountryFilter)) : sorted
+    );
+  },
+
+  renderStats(sorted){
+    const withScore = sorted.filter(m => m?.tmdb?.vote_average);
+    const avg = withScore.length ? (withScore.reduce((s,m) => s + (m.tmdb.vote_average||0), 0) / withScore.length) : 0;
+    const top = sorted[0];
+    const countryCounts = {};
+    sorted.forEach(m => (m.country||[]).forEach(c => { countryCounts[c.name] = (countryCounts[c.name]||0) + 1; }));
+    const leaderCountry = Object.entries(countryCounts).sort((a,b)=>b[1]-a[1])[0];
+
+    document.getElementById('insight-stat-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Tổng phim quét được</div><div class="stat-value">${sorted.length}</div><div class="stat-hint">khớp bộ lọc hiện tại</div></div>
+      <div class="stat-card"><div class="stat-label">Điểm TMDB trung bình</div><div class="stat-value">${avg.toFixed(1)}<span style="font-size:16px;color:var(--muted);">/10</span></div><div class="stat-hint">${withScore.length} phim có điểm TMDB</div></div>
+      <div class="stat-card"><div class="stat-label">Phim điểm cao nhất</div><div class="stat-value" style="font-size:20px; font-family:'Inter'; font-weight:800;">${top ? (top.tmdb?.vote_average||0).toFixed(1) : '—'}</div><div class="stat-hint">${top ? Utils.escapeHtml(top.name) : '—'}</div></div>
+      <div class="stat-card"><div class="stat-label">Quốc gia dẫn đầu</div><div class="stat-value" style="font-size:20px; font-family:'Inter'; font-weight:800;">${leaderCountry ? Utils.escapeHtml(leaderCountry[0]) : '—'}</div><div class="stat-hint">${leaderCountry ? `${leaderCountry[1]} phim trong danh sách` : '—'}</div></div>
+    `;
+  },
+
+  renderCountryCards(sorted){
+    const byCountry = {};
+    sorted.forEach(m => (m.country||[]).forEach(c => {
+      if(!byCountry[c.slug]) byCountry[c.slug] = { name: c.name, slug: c.slug, items: [] };
+      byCountry[c.slug].items.push(m);
+    }));
+    const list = Object.values(byCountry).map(c => {
+      const scores = c.items.map(Insights.score);
+      const avg = scores.reduce((s,v)=>s+v,0) / scores.length;
+      return { ...c, count: c.items.length, avg };
+    }).sort((a,b) => b.avg - a.avg).slice(0, 12);
+
+    const grid = document.getElementById('insight-country-grid');
+    if(!list.length){ grid.innerHTML = `<div class="empty-state">Chưa có dữ liệu.</div>`; return; }
+    grid.innerHTML = list.map(c => `
+      <div class="insight-country-card ${State.insightCountryFilter===c.slug?'active':''}" onclick="Insights.filterByCountry('${c.slug}')">
+        <div class="ic-name">${Utils.escapeHtml(c.name)} <span class="ic-count">${c.count}</span></div>
+        <div class="ic-score">${(c.avg/10).toFixed(1)}</div>
+        <div class="ic-hint">điểm TMDB trung bình /10</div>
+      </div>
+    `).join('');
+  },
+
+  filterByCountry(slug){
+    State.insightCountryFilter = State.insightCountryFilter === slug ? '' : slug;
+    Insights.renderAll();
+  },
+
+  renderRankingList(items){
+    const top = items.slice(0, 30);
+    document.getElementById('insight-rank-count').textContent = items.length;
+    const listEl = document.getElementById('insight-rank-list');
+    if(!top.length){ listEl.innerHTML = `<div class="empty-state">Không có phim nào khớp bộ lọc.</div>`; return; }
+    listEl.innerHTML = top.map((m, i) => `
+      <div class="rank-row" id="insight-rank-${Utils.escapeHtml(m.slug)}">
+        <div class="rank-num">${i+1}</div>
+        <img class="rank-poster" src="${Utils.movieImg(m)}" loading="lazy" onerror="this.src='https://placehold.co/120x180/1c1f2e/94a3b8?text=No+Poster'">
+        <div class="rank-info">
+          <div class="rank-name">${Utils.escapeHtml(m.name)}</div>
+          <div class="rank-meta">${(m.country||[]).map(c=>c.name).join(', ') || '—'} · ${m.year || '—'}${m.tmdb?.vote_count ? ` · ${m.tmdb.vote_count} lượt đánh giá` : ''}</div>
+        </div>
+        <span class="insight-trend-slot"></span>
+        <div class="rank-score">${m.tmdb?.vote_average ? Number(m.tmdb.vote_average).toFixed(1) : '—'}</div>
+      </div>
+    `).join('');
+  },
+
+  // So khớp tên phim với dữ liệu thịnh hành ngày/tuần thật từ TMDB để vẽ mũi tên ▲▼ (giống trang chính)
+  async loadTrendArrows(items){
+    const norm = (s) => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    try{
+      const [dayRes, weekRes] = await Promise.all([TMDBAPI.getTrending('all','day'), TMDBAPI.getTrending('all','week')]);
+      const dayRank = new Map(), weekRank = new Map();
+      (dayRes?.results||[]).forEach((it,i) => dayRank.set(norm(it.title||it.name||it.original_name), i));
+      (weekRes?.results||[]).forEach((it,i) => weekRank.set(norm(it.title||it.name||it.original_name), i));
+
+      items.forEach(m => {
+        const row = document.getElementById(`insight-rank-${m.slug}`);
+        const slot = row?.querySelector('.insight-trend-slot');
+        if(!slot) return;
+        const key = norm(m.origin_name || m.name);
+        const d = dayRank.has(key) ? dayRank.get(key) : null, w = weekRank.has(key) ? weekRank.get(key) : null;
+        if(d !== null && w !== null){
+          if(d < w) slot.innerHTML = `<span class="rank-trend up">▲ Tăng</span>`;
+          else if(d > w) slot.innerHTML = `<span class="rank-trend down">▼ Giảm</span>`;
+          else slot.innerHTML = `<span class="rank-trend flat">▬ Ổn định</span>`;
+        } else if(d !== null){
+          slot.innerHTML = `<span class="rank-trend up">▲ Mới nổi</span>`;
+        }
+      });
+    }catch(e){}
+  },
+
+  /* ---------- Biểu đồ điểm TMDB theo thời gian (localStorage, kiểu chứng khoán) ---------- */
+  recordSnapshot(){
+    const withScore = State.insightPool.filter(m => m?.tmdb?.vote_average);
+    if(!withScore.length) return;
+    const top10 = [...withScore].sort((a,b) => Insights.score(b)-Insights.score(a)).slice(0,10);
+    const avg = top10.reduce((s,m) => s + (m.tmdb.vote_average||0), 0) / top10.length;
+
+    let history = [];
+    try{ history = JSON.parse(localStorage.getItem(Insights.HISTORY_KEY) || '[]'); }catch(e){}
+    history.push({ t: Date.now(), avg: Math.round(avg*100)/100 });
+    if(history.length > Insights.MAX_HISTORY) history = history.slice(-Insights.MAX_HISTORY);
+    try{ localStorage.setItem(Insights.HISTORY_KEY, JSON.stringify(history)); }catch(e){}
+    Insights.drawChart(history);
+  },
+
+  clearHistory(){
+    Modal.open('Xoá lịch sử biểu đồ?', 'Toàn bộ điểm dữ liệu đã ghi trên biểu đồ xu hướng sẽ bị xoá khỏi trình duyệt này.', () => {
+      try{ localStorage.removeItem(Insights.HISTORY_KEY); }catch(e){}
+      Insights.drawChart([]);
+      Utils.toast('Đã xoá lịch sử biểu đồ.');
+    }, 'Xoá lịch sử');
+  },
+
+  drawChart(historyArg){
+    let history = historyArg;
+    if(!history){ try{ history = JSON.parse(localStorage.getItem(Insights.HISTORY_KEY) || '[]'); }catch(e){ history = []; } }
+    const canvas = document.getElementById('insight-chart');
+    const emptyEl = document.getElementById('insight-chart-empty');
+    const ticker = document.getElementById('insight-ticker');
+    if(!canvas) return;
+
+    if(!history.length){
+      canvas.style.display = 'none'; emptyEl.style.display = 'block';
+      ticker.textContent = '--'; ticker.className = 'tag tag-gold';
+      return;
+    }
+    canvas.style.display = 'block'; emptyEl.style.display = 'none';
+
+    // Ticker đổi màu xanh/đỏ giống ứng dụng chứng khoán, so điểm mới nhất với điểm liền trước
+    if(history.length >= 2){
+      const diff = history[history.length-1].avg - history[history.length-2].avg;
+      const pct = history[history.length-2].avg ? (diff/history[history.length-2].avg*100) : 0;
+      ticker.textContent = `${diff>=0?'▲':'▼'} ${Math.abs(pct).toFixed(1)}%`;
+      ticker.className = `tag ${diff>=0 ? 'tag-ticker-up' : 'tag-ticker-down'}`;
+    } else {
+      ticker.textContent = 'Điểm đầu tiên'; ticker.className = 'tag tag-gold';
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth || canvas.parentElement.clientWidth;
+    const cssH = 220;
+    canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+    canvas.style.height = cssH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,cssW,cssH);
+
+    const pad = { l: 34, r: 12, t: 14, b: 22 };
+    const vals = history.map(h => h.avg);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = (max - min) || 1;
+    const plotW = cssW - pad.l - pad.r, plotH = cssH - pad.t - pad.b;
+    const isUp = vals[vals.length-1] >= vals[0];
+    const lineColor = isUp ? '#4ade80' : '#f87171';
+    const fillColor = isUp ? 'rgba(74,222,128,.14)' : 'rgba(248,113,113,.14)';
+
+    const xAt = (i) => pad.l + (history.length===1 ? plotW/2 : (i/(history.length-1))*plotW);
+    const yAt = (v) => pad.t + plotH - ((v-min)/range)*plotH;
+
+    // lưới ngang mờ
+    ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1;
+    for(let g=0; g<=3; g++){
+      const gy = pad.t + (plotH/3)*g;
+      ctx.beginPath(); ctx.moveTo(pad.l, gy); ctx.lineTo(cssW-pad.r, gy); ctx.stroke();
+    }
+
+    // vùng tô dưới đường (area fill kiểu chứng khoán)
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), yAt(vals[0]));
+    vals.forEach((v,i) => ctx.lineTo(xAt(i), yAt(v)));
+    ctx.lineTo(xAt(vals.length-1), pad.t+plotH);
+    ctx.lineTo(xAt(0), pad.t+plotH);
+    ctx.closePath();
+    ctx.fillStyle = fillColor; ctx.fill();
+
+    // đường chính
+    ctx.beginPath();
+    vals.forEach((v,i) => { const x=xAt(i), y=yAt(v); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+    ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.stroke();
+
+    // chấm tại từng điểm dữ liệu
+    vals.forEach((v,i) => {
+      ctx.beginPath(); ctx.arc(xAt(i), yAt(v), i===vals.length-1?3.5:2.2, 0, Math.PI*2);
+      ctx.fillStyle = lineColor; ctx.fill();
+    });
+
+    // nhãn trục Y (min/max)
+    ctx.fillStyle = '#8991a8'; ctx.font = '10.5px Inter, sans-serif'; ctx.textAlign='left';
+    ctx.fillText(max.toFixed(1), 2, pad.t+4);
+    ctx.fillText(min.toFixed(1), 2, pad.t+plotH);
+
+    // nhãn ngày ở 2 đầu trục X
+    ctx.textAlign = 'left';
+    ctx.fillText(new Date(history[0].t).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}), pad.l, cssH-6);
+    ctx.textAlign = 'right';
+    ctx.fillText(new Date(history[history.length-1].t).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}), cssW-pad.r, cssH-6);
+  }
+};
+
+/* ============================================================
+   INIT
+   ============================================================ */
+if(State.token){ Handlers.boot(); }
+else { document.getElementById('login-view').style.display = 'flex'; }
+
+document.getElementById('login-pass').addEventListener('keydown', (e)=>{
+  if(e.key==='Enter'){ e.preventDefault(); Handlers.login(); }
+});
+</script>
+</body>
+</html>
